@@ -23,7 +23,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <button class="featured-icon" aria-label="Search"><i class="ph ph-magnifying-glass"></i></button>
+        <button class="featured-icon" id="searchBtn" aria-label="Search"><i class="ph ph-magnifying-glass"></i></button>
         <button class="featured-icon" aria-label="AI analyst" data-go="chat"><i class="ph ph-chats"></i></button>
         <button class="featured-icon" id="bellBtn" aria-label="Notifications">
           <i class="ph ph-bell"></i><span class="indicator" id="bellDot"></span></button>
@@ -38,12 +38,12 @@
           <span class="nav-icon"><i class="ph ph-sidebar-simple"></i></span>
           <span class="nav-label collapse-label">Collapse panel</span></button>
         <div class="nav-divider"></div>
-        <div class="profile-card">
+        <button class="profile-card" data-go="profile">
           <span class="avatar">AK</span>
           <span class="profile-info">
             <span class="profile-name">Aisha</span>
             <span class="profile-role">Finance · Senior Analyst</span></span>
-        </div>
+        </button>
       </aside>
 
       <aside class="chat-sb" id="chatSb" hidden></aside>
@@ -55,6 +55,9 @@
   </div>
 
   <div class="scrim" id="scrim"></div>
+  <div class="pop-scrim" id="popScrim"></div>
+  <div class="filter-pop" id="filterPop"></div>
+  <div class="search-overlay" id="searchOverlay"></div>
   <aside class="notif-drawer" id="notifDrawer" aria-label="Notifications"></aside>
   <div class="toast-wrap" id="toasts" aria-live="polite"></div>
   <script src="app.js"></script>

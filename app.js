@@ -178,9 +178,9 @@ ${delta?`<div class="scorecard"><div class="score-row"><span class="score-label"
 ${graph?`<div class="score-graph">${spark(dir)}</div>`:''}</div>`:''}
 ${graph?`<div class="kpi-foot tnum">Last updated: 16:53 05-08-2026</div>`:''}</article>`;
 
-const chartHead=(t,s,pad)=>`<div class="chart-head" ${pad?`style="padding-left:${pad}px"`:''}>
+const chartHead=(t,s,pad,key)=>`<div class="chart-head" ${pad?`style="padding-left:${pad}px"`:''}>
 <div class="chart-head-t"><h2 class="sec-title">${E(t)}</h2>${s?`<p class="sec-sub">${E(s)}</p>`:''}</div>
-<button class="expand-btn" aria-label="Open full view">${I('arrow-square-out')}</button></div>`;
+<button class="expand-btn" aria-label="Open full view" ${key?`data-chartd="${key}"`:''}>${I('arrow-square-out')}</button></div>`;
 
 const tabsRow=a=>`<nav class="tabs">${TABS.map(([id,l])=>
 `<button class="tab ${id===a?'is-active':''}" data-go="${id}">${l}<span class="u"></span></button>`).join('')}</nav>`;
@@ -243,7 +243,7 @@ S.queue=()=>({sec:'Recommendations',page:'Recommendations review queue',w:892,ht
 <div class="q-filters">
 <div class="q-search-row"><label class="input-field grow">${I('magnifying-glass')}
 <input type="search" placeholder="Search by SKU, brand or factor" aria-label="Search"/></label>
-<button class="icon-sq" aria-label="More filters">${I('funnel')}</button></div>
+<button class="icon-sq" aria-label="More filters" data-filters>${I('funnel')}</button></div>
 <div class="filters-results"><div class="applied" data-chips>
 <span class="chip is-active">Category: Electronics <button aria-label="Remove">${I('x')}</button></span>
 <span class="chip is-active">Status: Pending <button aria-label="Remove">${I('x')}</button></span>
@@ -281,7 +281,7 @@ S.detail=()=>({sec:'Recommendations',page:'Recommendation detail',w:1060,html:`
 </div>
 
 <div class="chart-card" data-chart>
-${chartHead('Price history','e& vs tracked competitors over the last 8 weeks',40)}
+${chartHead('Price history','e& vs tracked competitors over the last 8 weeks',40,'b2-price')}
 ${lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],fmt:v=>'AED '+Math.round(v).toLocaleString(),
 series:[{n:'e&',c:'var(--dv1)',area:1,d:[3980,3960,3940,3900,3880,3860,3820,3749]},
 {n:'Competitor A',c:'var(--dv2)',d:[3900,3890,3880,3860,3840,3810,3790,3600]},
@@ -340,7 +340,7 @@ ${kpi('Sales volume','+7.8%','+1.2pp','up',0,'pos')}
 ${kpi('Revenue','+3.4%','+0.4pp','up',0,'pos')}
 ${kpi('Margin','-0.6%','-0.2pp','down',0,'neg')}</div>
 <div class="chart-card" data-chart>
-${chartHead('Approved decisions vs actual revenue','Approval volume rose 48% over 8 weeks while revenue climbed from AED 410K to 495K',40)}
+${chartHead('Approved decisions vs actual revenue','Approval volume rose 48% over 8 weeks while revenue climbed from AED 410K to 495K',40,'c1-combo')}
 ${comboC()}
 ${legend([['Rejected','var(--dv-rej)',1],['Approved','var(--dv-app-lbl)',0],['Revenue','var(--dv-rev)',2]])}</div>
 <div class="tbl"><div class="tbl-scroll">
@@ -354,7 +354,7 @@ ${[['Smartphones',-5.2,4.1,'3.8%'],['Accessories',-2.1,6.7,'5.2%'],['Wearables',
 
 S.c2=()=>dash('c2','Competitor intelligence','Live pricing vs e& across tracked categories',`
 <div class="chart-card" data-chart>
-${chartHead('e& price vs competitors by category','e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',40)}
+${chartHead('e& price vs competitors by category','e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',40,'c2-grouped')}
 ${groupC()}
 ${legend([['e&','#950124'],['Competitor A','#EA6C29'],['Competitor B','#0D9488']])}</div>
 <div class="c2-cols">
@@ -385,7 +385,7 @@ ${kpi('MAPE (demand)','6.8%',null)}
 ${kpi('MAPE (revenue)','5.1%',null)}
 ${kpi('Confidence interval','4.2%',null)}</div>
 <div class="chart-card" data-chart>
-${chartHead('Forecast vs actual weekly demand','Model output tracked against realised units per week',40)}
+${chartHead('Forecast vs actual weekly demand','Model output tracked against realised units per week',40,'c3-forecast')}
 ${lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],fmt:v=>Math.round(v).toLocaleString(),
 series:[{n:'Forecast',c:'var(--dv2)',d:[1180,1240,1210,1330,1290,1420,1460,1520]},
 {n:'Actual',c:'var(--dv1)',area:1,d:[1120,1190,1250,1280,1330,1380,1490,1560]}]})}
@@ -407,7 +407,7 @@ ${kpi('Markdown cost','-AED 84K','planned','down',0,'neg')}
 ${kpi('Incremental units','1,240','+310','up',0)}
 ${kpi('Margin delta','+2.1%','+0.3pp','up',0,'pos')}</div>
 <div class="chart-card" data-chart>
-${chartHead('Cumulative effect since cycle start: with ADPA vs baseline','With ADPA the cycle closed AED 612K ahead of the counterfactual baseline',48)}
+${chartHead('Cumulative effect since cycle start: with ADPA vs baseline','With ADPA the cycle closed AED 612K ahead of the counterfactual baseline',48,'c4-impact')}
 ${lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],fmt:v=>'AED '+Math.round(v)+'K',
 series:[{n:'With ADPA',c:'var(--dv1)',area:1,d:[60,140,215,300,390,470,545,612]},
 {n:'Baseline',c:'var(--n40)',d:[40,88,140,186,232,280,320,360]}]})}
@@ -416,7 +416,7 @@ ${legend([['With ADPA','var(--dv1)'],['Baseline without ADPA','var(--n40)']])}</
 
 S.c5=()=>dash('c5','Customer behaviour','Personalised offer response · UM segments only',`
 <div class="chart-card" data-chart>
-${chartHead('Demand elasticity by segment','Conversion response per customer segment')}
+${chartHead('Demand elasticity by segment','Conversion response per customer segment',0,'c5-elasticity')}
 ${barsC([['Premium',4.1,'+4.1%','var(--dv2)'],['Value-seekers',9.4,'+9.4%','var(--dv3)'],
 ['Occasional',3.8,'+3.8%','var(--dv-vi)'],['New customers',2.1,'+2.1%','#EDA12F']])}</div>
 <div class="notification warning"><span class="notif-icon">${I('warning',1)}</span>
@@ -517,7 +517,7 @@ ${kpi('Overridden','4.4%','-0.7pp','up',0)}
 <input type="search" placeholder="Search by SKU, reason code or reviewer" aria-label="Search log"/></label>
 <div class="segmented" data-seg><button class="is-active">All</button><button>Approved</button>
 <button>Rejected</button><button>Overridden</button></div>
-<button class="icon-sq" aria-label="Date range">${I('calendar-blank')}</button></div>
+<button class="icon-sq" aria-label="More filters" data-filters>${I('funnel')}</button></div>
 <div class="filters-results"><div class="applied" data-chips>
 <span class="chip is-active">Reviewer: Aisha K. <button aria-label="Remove">${I('x')}</button></span>
 <span class="chip is-active">Cycle: Aug 05–11 <button aria-label="Remove">${I('x')}</button></span>
@@ -547,6 +547,215 @@ ${cm?`<span class="muted" title="Has comment">${I('chat-circle')}</span>`:''}
 <button class="pg is-active">1</button><button class="pg">2</button><button class="pg">3</button>
 <span class="pg dots">...</span><button class="pg">161</button>
 <button class="pg">Next ${I('caret-right')}</button></nav>`});
+
+
+/* ---------- Chart detail pages ---------- */
+const CHARTS={
+ 'c1-combo':{sec:'Dashboards',t:'Approved decisions vs actual revenue',
+  s:'Approval volume rose 48% over 8 weeks while revenue climbed from AED 410K to 495K',back:'c1',
+  stats:[['Total decisions','788','+48%','up'],['Approved','688','87.3%','up'],
+         ['Rejected','100','12.7%','down'],['Revenue, cycle end','AED 495K','+20.7%','up']],
+  render:()=>comboC(),
+  legend:[['Rejected','var(--dv-rej)',1],['Approved','var(--dv-app-lbl)',0],['Revenue','var(--dv-rev)',2]],
+  cols:['Week','Approved','Rejected','Approval rate','Revenue, AED K'],
+  rows:COMBO.map(([w,a,r,rev])=>[w,a,r,((a/(a+r))*100).toFixed(1)+'%',rev]),
+  notes:['Approval rate climbed from 80.0% in W1 to 95.2% in W8 as competitor signals stabilised.',
+         'Rejections fell every week after W3, when the margin floor was raised for Accessories.',
+         'Revenue tracks approvals with roughly a one-week lag.']},
+ 'c2-grouped':{sec:'Dashboards',t:'e& price vs competitors by category',
+  s:'e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',back:'c2',
+  stats:[['Categories tracked','4','live','up'],['Avg premium vs A','+2.8%','','up'],
+         ['Avg premium vs B','+1.4%','','up'],['Feed freshness','12 min','ok','up']],
+  render:()=>groupC(),
+  legend:[['e&','#950124'],['Competitor A','#EA6C29'],['Competitor B','#0D9488']],
+  cols:['Category','e&','Competitor A','Competitor B','Gap vs A','Gap vs B'],
+  rows:COMP.map(([c,e,a,b])=>[c,aed(e),aed(a),aed(b),
+    ((e-a)/a*100>0?'+':'')+((e-a)/a*100).toFixed(1)+'%',((e-b)/b*100>0?'+':'')+((e-b)/b*100).toFixed(1)+'%']),
+  notes:['Smartphones carry the largest premium at +4.2% over Competitor A.',
+         'Accessories sit below both competitors — a candidate for a price increase.',
+         'Wearables are the most tightly matched category across all three retailers.']},
+ 'c3-forecast':{sec:'Dashboards',t:'Forecast vs actual weekly demand',
+  s:'Model output tracked against realised units per week',back:'c3',
+  stats:[['MAPE, demand','6.8%','-0.4pp','up'],['MAPE, revenue','5.1%','-0.2pp','up'],
+         ['Bias','+1.2%','','down'],['Weeks within target','6 of 8','','up']],
+  render:()=>lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],fmt:v=>Math.round(v).toLocaleString(),h:260,
+    series:[{n:'Forecast',c:'var(--dv2)',d:[1180,1240,1210,1330,1290,1420,1460,1520]},
+            {n:'Actual',c:'var(--dv1)',area:1,d:[1120,1190,1250,1280,1330,1380,1490,1560]}]}),
+  legend:[['Forecast','var(--dv2)'],['Actual','var(--dv1)']],
+  cols:['Week','Forecast, units','Actual, units','Error','Error %'],
+  rows:[['W1',1180,1120],['W2',1240,1190],['W3',1210,1250],['W4',1330,1280],['W5',1290,1330],
+        ['W6',1420,1380],['W7',1460,1490],['W8',1520,1560]]
+    .map(([w,f,a])=>[w,f.toLocaleString(),a.toLocaleString(),(a-f>0?'+':'')+(a-f),
+      ((a-f)/f*100>0?'+':'')+((a-f)/f*100).toFixed(1)+'%']),
+  notes:['The model under-forecast demand in the final three weeks as the seasonal dip reversed.',
+         'W3 shows the largest positive error at +3.3%.',
+         'Bias stays inside the ±2% tolerance agreed with Finance.']},
+ 'c4-impact':{sec:'Dashboards',t:'Cumulative effect since cycle start: with ADPA vs baseline',
+  s:'With ADPA the cycle closed AED 612K ahead of the counterfactual baseline',back:'c4',
+  stats:[['Uplift','+AED 612K','+8.4%','up'],['Baseline','AED 360K','','down'],
+         ['Markdown cost','-AED 84K','planned','down'],['Net effect','+AED 528K','','up']],
+  render:()=>lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],fmt:v=>'AED '+Math.round(v)+'K',h:260,
+    series:[{n:'With ADPA',c:'var(--dv1)',area:1,d:[60,140,215,300,390,470,545,612]},
+            {n:'Baseline',c:'var(--n40)',d:[40,88,140,186,232,280,320,360]}]}),
+  legend:[['With ADPA','var(--dv1)'],['Baseline without ADPA','var(--n40)']],
+  cols:['Week','With ADPA','Baseline','Delta','Cumulative delta'],
+  rows:(()=>{const A=[60,140,215,300,390,470,545,612],B=[40,88,140,186,232,280,320,360];
+    return A.map((a,i)=>['W'+(i+1),'AED '+a+'K','AED '+B[i]+'K','+AED '+(a-B[i])+'K','+AED '+(a-B[i])+'K']);})(),
+  notes:['The gap widens every week — compounding, not a one-off.',
+         'Markdown cost stays inside the approved AED 90K envelope.',
+         'W6 onwards the uplift alone covers the full programme run cost.']},
+ 'c5-elasticity':{sec:'Dashboards',t:'Demand elasticity by segment',
+  s:'Conversion response per customer segment',back:'c5',
+  stats:[['Segments','4','UM approved','up'],['Best responder','Value-seekers','+9.4%','up'],
+         ['Weakest','New customers','+2.1%','down'],['Total reach','98,050','','up']],
+  render:()=>barsC([['Premium',4.1,'+4.1%','var(--dv2)'],['Value-seekers',9.4,'+9.4%','var(--dv3)'],
+                    ['Occasional',3.8,'+3.8%','var(--dv-vi)'],['New customers',2.1,'+2.1%','#EDA12F']]),
+  legend:null,
+  cols:['Segment','Reach','Conversion','Elasticity','Δ vs base price'],
+  rows:[['Premium','18,400','6.1%','+4.1%','+1.2%'],['Value-seekers','42,100','9.4%','+9.4%','+3.8%'],
+        ['Occasional','27,900','4.2%','+3.8%','+0.9%'],['New customers','9,650','3.0%','+2.1%','0.0%']],
+  notes:['Value-seekers respond nearly 2.5x more strongly than Premium.',
+         'New customers barely react to price — messaging matters more than discount depth.',
+         'All figures are aggregated by UM segment; no individual-level data is used.']},
+ 'b2-price':{sec:'Recommendations',t:'Price history',
+  s:'e& vs tracked competitors over the last 8 weeks',back:'detail',
+  stats:[['Current','AED 3,899','','down'],['Recommended','AED 3,749','-3.8%','down'],
+         ['8-week low','AED 3,749','','down'],['8-week high','AED 3,980','','up']],
+  render:()=>lineC({labels:['W1','W2','W3','W4','W5','W6','W7','W8'],
+    fmt:v=>'AED '+Math.round(v).toLocaleString(),h:260,
+    series:[{n:'e&',c:'var(--dv1)',area:1,d:[3980,3960,3940,3900,3880,3860,3820,3749]},
+            {n:'Competitor A',c:'var(--dv2)',d:[3900,3890,3880,3860,3840,3810,3790,3600]},
+            {n:'Competitor B',c:'var(--dv3)',d:[3950,3930,3920,3900,3890,3870,3850,3650]}]}),
+  legend:[['e&','var(--dv1)'],['Competitor A','var(--dv2)'],['Competitor B','var(--dv3)']],
+  cols:['Week','e&','Competitor A','Competitor B','Gap vs A'],
+  rows:(()=>{const E_=[3980,3960,3940,3900,3880,3860,3820,3749],A=[3900,3890,3880,3860,3840,3810,3790,3600],
+    B=[3950,3930,3920,3900,3890,3870,3850,3650];
+    return E_.map((e,i)=>['W'+(i+1),aed(e),aed(A[i]),aed(B[i]),
+      ((e-A[i])/A[i]*100>0?'+':'')+((e-A[i])/A[i]*100).toFixed(1)+'%']);})(),
+  notes:['Competitor A cut hardest in W8, opening a 4.1% gap against e&.',
+         'e& has drifted down steadily rather than in steps — no promo spikes.',
+         'The recommendation closes most of the gap without breaching the margin floor.']}
+};
+let chartKey='c1-combo';
+
+S.chartd=()=>{const c=CHARTS[chartKey]||CHARTS['c1-combo'];
+return {sec:c.sec,page:c.t,w:1180,html:`
+<div class="cd-head">
+<button class="cd-back" data-go="${c.back}" aria-label="Back to ${E(c.sec)}">${I('arrow-left')}</button>
+<div class="q-title grow"><h1 class="page-title">${E(c.t)}</h1><p class="page-sub">${E(c.s)}</p></div>
+<div class="dash-actions">
+<div class="segmented" data-seg><button>4W</button><button class="is-active">8W</button>
+<button>13W</button><button>ALL</button></div>
+<button class="btn" data-toast="Chart data exported">${I('export')} Export data</button></div></div>
+
+<div class="kpi-row">${c.stats.map(([l,v,d,dir])=>kpi(l,v,d||null,dir,0,dir==='up'?'pos':'neg')).join('')}</div>
+
+<div class="chart-card cd-chart" data-chart>${c.render()}
+${c.legend?legend(c.legend):''}</div>
+
+<div class="cd-cols">
+<div>
+<h2 class="sec-title-16" style="margin-bottom:var(--s8)">Underlying data</h2>
+<div class="tbl"><div class="tbl-scroll">
+${tRow(c.cols.map((h,i)=>`<span class="${i===0?'tc-110':'tc'}">${E(h)}</span>`).join(''),1)}
+${c.rows.map((r,i)=>tRow(r.map((v,j)=>`<span class="${j===0?'tc-110':'tc'} ${j?'tnum':''}">${E(v)}</span>`).join(''))
+ .replace('class="trow body"',`class="trow body" style="animation-delay:${i*35}ms"`)).join('')}
+</div></div></div>
+<div>
+<h2 class="sec-title-16" style="margin-bottom:var(--s8)">What the data shows</h2>
+<div class="card pad cd-notes">${c.notes.map(n=>`<div class="cd-note">
+<span class="cd-bullet">${I('lightbulb')}</span><p>${E(n)}</p></div>`).join('')}</div>
+</div></div>`};};
+
+
+/* ---------- Profile ---------- */
+const PERMS=[['Recommendations','Review, approve and reject','allowed'],
+ ['Dashboards','Read-only across all five boards','allowed'],
+ ['Pricing rules','Configure guardrails and floors','denied'],
+ ['Reports','Schedule and export','denied'],
+ ['Admin','User and role management','denied']];
+const PREFS=[['Critical alerts','Stale data, feed failures, breached guardrails',1],
+ ['Competitor movements','Price cuts above 5% in tracked categories',1],
+ ['Cycle summaries','Digest when a repricing cycle completes',1],
+ ['Model updates','New engine versions and reason codes',0],
+ ['Weekly report','Every Monday at 08:00 GST',0]];
+const DEVICES=[['laptop','MacBook Pro · Chrome','Dubai, UAE · current session','Active now',1],
+ ['device-mobile','iPhone 15 · Safari','Dubai, UAE','2 hours ago',0],
+ ['desktop-tower','Windows · Edge','Abu Dhabi, UAE','Aug 04, 09:12',0]];
+
+S.profile=()=>({sec:null,page:'Profile',w:1060,html:`
+<div class="pf-hero card">
+<span class="pf-avatar">AK</span>
+<div class="grow">
+<h1 class="page-title">Aisha Al-Khayyat</h1>
+<p class="page-sub">Finance · Senior Analyst · Pricing governance</p>
+<div class="pf-tags">
+<span class="chip-sm">aisha.alkhayyat@eand.com</span>
+<span class="chip-sm">Employee ID 40 128</span>
+<span class="chip-sm">Dubai, GST +4</span></div>
+</div>
+<div class="row" style="gap:8px;align-self:flex-start">
+<button class="btn" data-toast="Profile editor opened">${I('pencil-simple')} Edit profile</button>
+<button class="btn" data-toast="Signed out">${I('sign-out')} Sign out</button></div>
+</div>
+
+<div class="kpi-row">
+${kpi('Decisions this cycle','42','+18','up',0)}
+${kpi('Approval rate','88.1%','+1.4pp','up',0,'pos')}
+${kpi('Avg review time','2m 14s','-22s','up',0)}
+${kpi('Overrides used','3','-1','up',0)}
+</div>
+
+<div class="pf-cols">
+<div class="pf-col">
+<div class="card pad">
+<h2 class="sec-title" style="margin-bottom:var(--s12)">Personal details</h2>
+<div class="pf-fields">
+<label><span class="field-label">Full name</span><input class="input" value="Aisha Al-Khayyat"/></label>
+<label><span class="field-label">Job title</span><input class="input" value="Senior Analyst"/></label>
+<label><span class="field-label">Department</span><input class="input" value="Finance"/></label>
+<label><span class="field-label">Work email</span><input class="input" value="aisha.alkhayyat@eand.com"/></label>
+<label><span class="field-label">Time zone</span>
+<select class="select"><option>Gulf Standard Time (GST, +4)</option><option>UTC</option></select></label>
+<label><span class="field-label">Language</span>
+<select class="select"><option>English</option><option>العربية — not in scope this phase</option></select></label>
+</div>
+<div class="row" style="justify-content:flex-end;margin-top:var(--s16)">
+<button class="btn btn-primary" data-toast="Profile details saved">Save changes</button></div>
+</div>
+
+<div class="card pad">
+<h2 class="sec-title" style="margin-bottom:var(--s4)">Notification preferences</h2>
+<p class="sec-sub" style="margin-bottom:var(--s12)">Applies to the bell in the top bar and to email digests.</p>
+${PREFS.map(([t,s,on])=>`<label class="pf-toggle-row">
+<span class="grow"><span class="pf-toggle-t">${E(t)}</span><span class="pf-toggle-s">${E(s)}</span></span>
+<span class="switch"><input type="checkbox" ${on?'checked':''}/><span class="switch-track"></span></span></label>`).join('')}
+</div>
+</div>
+
+<div class="pf-col">
+<div class="card pad">
+<h2 class="sec-title" style="margin-bottom:var(--s4)">Role and permissions</h2>
+<p class="sec-sub" style="margin-bottom:var(--s12)">Granted by the DLA governance matrix. Contact Admin to change.</p>
+${PERMS.map(([t,s,st])=>`<div class="pf-perm">
+<span class="pf-perm-ic ${st}">${I(st==='allowed'?'check':'lock-simple')}</span>
+<span class="grow"><span class="pf-toggle-t">${E(t)}</span><span class="pf-toggle-s">${E(s)}</span></span>
+<span class="badge ${st==='allowed'?'badge-approved':'badge-neutral'}">${st==='allowed'?'Allowed':'No access'}</span>
+</div>`).join('')}
+</div>
+
+<div class="card pad">
+<h2 class="sec-title" style="margin-bottom:var(--s12)">Active sessions</h2>
+${DEVICES.map(([ic,t,s,when,cur])=>`<div class="pf-perm">
+<span class="pf-perm-ic ${cur?'allowed':''}">${I(ic)}</span>
+<span class="grow"><span class="pf-toggle-t">${E(t)}</span><span class="pf-toggle-s">${E(s)}</span></span>
+<span class="pf-when tnum">${E(when)}</span>
+${cur?'':`<button class="pf-revoke" data-toast="Session revoked">Revoke</button>`}</div>`).join('')}
+<div class="row" style="justify-content:flex-end;margin-top:var(--s12)">
+<button class="btn" data-toast="All other sessions signed out">Sign out everywhere else</button></div>
+</div>
+</div>
+</div>`});
 
 S.rules=()=>({sec:null,page:'Rules',w:892,html:`
 <div class="card pad" style="text-align:center;padding:var(--s48)">
@@ -590,6 +799,120 @@ function closeNotif(){
   $('#scrim').classList.remove('is-on');
   $('#notifDrawer').classList.remove('is-open');
   document.body.style.overflow='';
+}
+
+
+/* ---------- Filter popover ---------- */
+const FILTERS=[
+ ['Category',[['Smartphones',1],['Accessories',1],['Wearables',0],['Tablets',0],['Laptops',0]]],
+ ['Status',[['Pending',1],['Flagged',0],['Approved',0],['Rejected',0]]],
+ ['Brand',[['Apple',0],['Samsung',0],['Xiaomi',0],['Google',0]]]];
+
+function filterPanel(){
+  return `<div class="fp-head"><span class="fp-title">Filters</span>
+<button class="icon-sq sm" data-fp-close aria-label="Close">${I('x')}</button></div>
+<div class="fp-body">
+${FILTERS.map(([grp,items])=>`<div class="fp-group">
+<div class="fp-label">${grp}</div>
+${items.map(([n,on])=>`<label class="fp-row">
+<input type="checkbox" class="checkbox" ${on?'checked':''}/><span>${E(n)}</span></label>`).join('')}
+</div>`).join('')}
+<div class="fp-group"><div class="fp-label">Deviation from recommendation</div>
+<div class="fp-range">
+<div class="slider-block" data-slider data-min="-20" data-max="20">
+<div class="slider-head"><span class="slider-name">Minimum Δ%</span>
+<span class="pct down tnum" data-out>-8.0%</span></div>
+<div class="slider-wrap"><div class="slider-track"><div class="slider-zero" style="left:50%"></div>
+<div class="slider-fill" data-fill></div></div>
+<input class="slider-input" type="range" min="-20" max="20" step="0.5" value="-8" aria-label="Minimum deviation"/>
+</div></div></div></div>
+<div class="fp-group"><div class="fp-label">Cycle</div>
+<div class="segmented" data-seg style="width:100%">
+<button class="is-active" style="flex:1">Current</button><button style="flex:1">Previous</button>
+<button style="flex:1">All</button></div></div>
+</div>
+<div class="fp-foot">
+<button class="btn" data-fp-reset>Reset</button>
+<button class="btn btn-primary grow" data-fp-apply>Apply filters</button></div>`;
+}
+function openFilters(anchor){
+  const p=$('#filterPop');
+  if(!p.dataset.b){ p.innerHTML=filterPanel(); p.dataset.b='1'; $$('[data-slider]',p).forEach(initSlider); }
+  p.style.maxHeight='';                       // measure at natural height first
+  p.classList.add('is-measuring');
+  const r=anchor.getBoundingClientRect();
+  const vh=window.innerHeight, vw=window.innerWidth, M=16, W=340;
+  const h=Math.min(p.scrollHeight, vh-M*2);
+  const below=vh-r.bottom-M, above=r.top-M;
+  const flip=below<h&&above>below;             // open upwards when that gives more room
+  const avail=flip?above:below;
+  p.style.maxHeight=Math.min(h,avail)+'px';
+  p.style.left=Math.max(M,Math.min(r.right-W,vw-W-M))+'px';
+  p.style.top=flip?'':(r.bottom+8)+'px';
+  p.style.bottom=flip?(vh-r.top+8)+'px':'';
+  p.classList.toggle('is-flipped',flip);
+  p.classList.remove('is-measuring');
+  p.classList.add('is-open');
+  $('#popScrim').classList.add('is-on');
+}
+function closeFilters(){ $('#filterPop').classList.remove('is-open'); $('#popScrim').classList.remove('is-on'); }
+
+/* ---------- Global search (top navigation) ---------- */
+const SEARCH=[
+ ['Recent',[['clock-counter-clockwise','iPhone 15 Pro 256GB','SKU-114872','detail'],
+            ['clock-counter-clockwise','Competitor intelligence','Dashboard','c2']]],
+ ['SKUs',[['device-mobile','iPhone 15 Pro 256GB','Smartphones · AED 3,749','detail'],
+          ['device-mobile','Samsung Galaxy S24','Smartphones · AED 3,299','detail'],
+          ['headphones','AirPods Pro 2','Accessories · AED 929','detail'],
+          ['device-tablet','iPad Air 11 256GB','Tablets · AED 2,399','detail']]],
+ ['Dashboards',[['chart-line','Pricing performance','Deviation, volume and revenue','c1'],
+                ['chart-line','Forecast accuracy','MAPE and bias metrics','c3'],
+                ['chart-line','Revenue impact','Cumulative uplift vs baseline','c4']]],
+ ['Actions',[['list-checks','Review recommendations queue','128 pending','queue'],
+             ['flask','Run scenario simulation','What-if simulator','sim'],
+             ['clock-counter-clockwise','Open decision history','Full audit log','history'],
+             ['chats','Ask the AI analyst','LLM / RAG analyst','chat']]]];
+
+function searchMarkup(q){
+  const t=q.trim().toLowerCase();
+  const groups=SEARCH.map(([g,items])=>[g,items.filter(([,l,m])=>!t||l.toLowerCase().includes(t)||m.toLowerCase().includes(t))])
+    .filter(([,items])=>items.length);
+  if(!groups.length) return `<div class="sr-empty">${I('magnifying-glass')}<p>Nothing matches “${E(q)}”</p>
+<span>Try a SKU code, a category or a dashboard name</span></div>`;
+  let idx=-1;
+  return groups.map(([g,items])=>`<div class="sr-group"><div class="sr-label">${g}</div>
+${items.map(([ic,l,m,go])=>{idx++;return `<button class="sr-item${idx===0?' is-active':''}" data-go="${go}" data-i="${idx}">
+<span class="sr-icon">${I(ic)}</span>
+<span class="grow"><span class="sr-title">${E(l)}</span><span class="sr-meta">${E(m)}</span></span>
+<span class="sr-enter">${I('arrow-elbow-down-left')}</span></button>`;}).join('')}</div>`).join('');
+}
+function openSearch(){
+  const o=$('#searchOverlay');
+  if(!o.dataset.b){
+    o.innerHTML=`<div class="sr-panel" role="dialog" aria-label="Search">
+<div class="sr-field">${I('magnifying-glass')}
+<input id="srInput" type="search" placeholder="Search SKUs, dashboards or actions" aria-label="Search" autocomplete="off"/>
+<kbd class="sr-kbd">Esc</kbd></div>
+<div class="sr-results" id="srResults">${searchMarkup('')}</div>
+<div class="sr-foot"><span><kbd class="sr-kbd">↑</kbd><kbd class="sr-kbd">↓</kbd> navigate</span>
+<span><kbd class="sr-kbd">↵</kbd> open</span><span class="grow"></span>
+<span class="tnum">Indexed 2,500 SKUs</span></div></div>`;
+    o.dataset.b='1';
+    $('#srInput').addEventListener('input',e=>{
+      $('#srResults').innerHTML=searchMarkup(e.target.value);});
+  }
+  o.classList.add('is-open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>$('#srInput').focus(),40);
+}
+function closeSearch(){ $('#searchOverlay').classList.remove('is-open'); document.body.style.overflow=''; }
+function moveSearch(dir){
+  const items=$$('#srResults .sr-item'); if(!items.length)return;
+  let i=items.findIndex(x=>x.classList.contains('is-active'));
+  items.forEach(x=>x.classList.remove('is-active'));
+  i=(i+dir+items.length)%items.length;
+  items[i].classList.add('is-active');
+  items[i].scrollIntoView({block:'nearest'});
 }
 
 /* ---------- router ---------- */
@@ -663,7 +986,16 @@ document.addEventListener('click',e=>{
   if(p){p.classList.add('pressed');setTimeout(()=>p.classList.remove('pressed'),80);}
   const g=e.target.closest('[data-go]');
   if(g&&!g.disabled){e.preventDefault();hist.push(location.hash);location.hash='#/'+g.dataset.go;return;}
+  const cd=e.target.closest('[data-chartd]');
+  if(cd){chartKey=cd.dataset.chartd;hist.push(location.hash);location.hash='#/chartd';return;}
   if(e.target.closest('[data-notif]')){openNotif();return;}
+  if(e.target.closest('[data-filters]')){openFilters(e.target.closest('[data-filters]'));return;}
+  if(e.target.closest('[data-fp-close]')){closeFilters();return;}
+  if(e.target.closest('[data-fp-apply]')){closeFilters();toast('Filters applied');return;}
+  if(e.target.closest('[data-fp-reset]')){
+    $$('#filterPop input[type=checkbox]').forEach(c=>c.checked=false);toast('Filters reset');return;}
+  if(e.target.closest('#searchBtn')){openSearch();return;}
+  if(e.target.closest('.sr-item')){closeSearch();}
   if(e.target.closest('#notifClose')){closeNotif();return;}
   const nt=e.target.closest('[data-seg2] .nd-tab');
   if(nt){$$('[data-seg2] .nd-tab').forEach(b=>b.classList.remove('is-active'));nt.classList.add('is-active');return;}
@@ -710,7 +1042,17 @@ $('#backBtn').addEventListener('click',()=>{if(hist.length)location.hash=hist.po
 $('#bellBtn').addEventListener('click',()=>{const d=$('#bellDot');
   d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');openNotif();});
 $('#scrim').addEventListener('click',closeNotif);
-addEventListener('keydown',e=>{if(e.key==='Escape')closeNotif();});
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeNotif();closeFilters();closeSearch();}
+  if((e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey)){e.preventDefault();openSearch();}
+  if(e.key==='/'&&!/input|textarea|select/i.test(document.activeElement.tagName)){e.preventDefault();openSearch();}
+  if($('#searchOverlay').classList.contains('is-open')){
+    if(e.key==='ArrowDown'){e.preventDefault();moveSearch(1);}
+    if(e.key==='ArrowUp'){e.preventDefault();moveSearch(-1);}
+    if(e.key==='Enter'){const a=$('#srResults .sr-item.is-active');if(a){closeSearch();location.hash='#/'+a.dataset.go;}}
+  }});
+$('#popScrim').addEventListener('click',closeFilters);
+$('#searchOverlay').addEventListener('click',e=>{if(e.target.id==='searchOverlay')closeSearch();});
 setInterval(()=>{const d=$('#bellDot');d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');},12000);
 addEventListener('hashchange',()=>render(location.hash.replace(/^#\/?/,'')||'home'));
 render(location.hash.replace(/^#\/?/,'')||'home');
