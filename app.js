@@ -1,3 +1,4 @@
+const BUILD="7";
 /* ADPA Governance Portal — structure mirrors the measured Figma nodes. */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -918,7 +919,10 @@ function moveSearch(dir){
 /* ---------- router ---------- */
 const hist=[];
 function render(r){
-  if(!S[r])r='home';
+  if(!S[r]){
+    if(r&&r!=='home'){renderMissing(r);return;}
+    r='home';
+  }
   const s=S[r]();
   $('#breadcrumb').innerHTML=s.sec
     ?`<span class="crumb-section">${E(s.sec)}</span><span class="crumb-sep">${I('caret-right')}</span><span class="crumb-page">${E(s.page)}</span>`
@@ -945,6 +949,23 @@ function render(r){
   scrollTo({top:0,behavior:RM?'auto':'smooth'});
   after(v);
 }
+function renderMissing(r){
+  $('#breadcrumb').innerHTML='<span class="crumb-page">Screen not found</span>';
+  $('#chatSb').hidden=true;
+  const v=$('#view');
+  v.classList.remove('is-bottom');
+  v.style.setProperty('--cmax','892px');
+  v.innerHTML=`<div class="card pad" style="text-align:center;padding:var(--s48)">
+<h1 class="page-title" style="margin-bottom:var(--s8)">Screen “${E(r)}” is not in this build</h1>
+<p class="page-sub" style="max-width:520px;margin:0 auto var(--s16)">
+Build <strong class="tnum">${BUILD}</strong> does not contain this route. If you expected it, the browser is
+serving a cached <code>app.js</code> — reload with cache disabled, or bump the <code>?v=</code> query.</p>
+<div class="row" style="justify-content:center;gap:8px">
+<button class="btn btn-primary" data-go="home">Go to Home</button>
+<button class="btn" id="hardReload">Reload without cache</button></div></div>`;
+  $('#hardReload').addEventListener('click',()=>location.reload(true));
+}
+
 function after(root){
   $$('[data-count]',root).forEach((el,i)=>setTimeout(()=>count(el),120+i*70));
   $$('[data-prog]',root).forEach((el,i)=>setTimeout(()=>el.style.width=el.dataset.prog+'%',200+i*200));
