@@ -951,6 +951,18 @@ function after(root){
   $$('[data-fill]',root).forEach((el,i)=>{if(el.closest('[data-slider]'))return;
     setTimeout(()=>el.style.width=Math.min(100,+el.dataset.fill*1.6)+'%',260+i*70);});
   $$('[data-slider]',root).forEach(initSlider);
+  labelCells(root);
+}
+
+/* on narrow screens each table row stacks; cells need their column name */
+function labelCells(root){
+  $$('.tbl',root).forEach(tbl=>{
+    const head=$('.trow.head',tbl); if(!head)return;
+    const names=[...head.children].map(c=>c.textContent.trim());
+    $$('.trow.body',tbl).forEach(row=>{
+      [...row.children].forEach((cell,i)=>{ if(names[i])cell.setAttribute('data-label',names[i]); });
+    });
+  });
 }
 function count(el){
   const raw=el.dataset.v,m=raw.match(/-?[\d.,]+/);
@@ -985,7 +997,10 @@ document.addEventListener('click',e=>{
   const p=e.target.closest('[data-press]');
   if(p){p.classList.add('pressed');setTimeout(()=>p.classList.remove('pressed'),80);}
   const g=e.target.closest('[data-go]');
-  if(g&&!g.disabled){e.preventDefault();hist.push(location.hash);location.hash='#/'+g.dataset.go;return;}
+  if(g&&!g.disabled){e.preventDefault();hist.push(location.hash);location.hash='#/'+g.dataset.go;
+    if($('#app').classList.contains('nav-open')){$('#app').classList.remove('nav-open');
+      $('#navToggle').setAttribute('aria-expanded','false');document.body.style.overflow='';}
+    return;}
   const cd=e.target.closest('[data-chartd]');
   if(cd){chartKey=cd.dataset.chartd;hist.push(location.hash);location.hash='#/chartd';return;}
   if(e.target.closest('[data-notif]')){openNotif();return;}
@@ -1038,6 +1053,11 @@ The strongest signal is competitor movement in Smartphones, which drove 46% of t
     th.appendChild(b);b.scrollIntoView({block:'end',behavior:RM?'auto':'smooth'});},RM?0:1100);
 }
 $('#collapseBtn').addEventListener('click',()=>$('#app').classList.toggle('is-collapsed'));
+const navToggle=()=>{const a=$('#app');const on=a.classList.toggle('nav-open');
+  $('#navToggle').setAttribute('aria-expanded',on?'true':'false');
+  document.body.style.overflow=on?'hidden':'';};
+$('#navToggle').addEventListener('click',navToggle);
+$('#navScrim').addEventListener('click',navToggle);
 $('#backBtn').addEventListener('click',()=>{if(hist.length)location.hash=hist.pop();else history.back();});
 $('#bellBtn').addEventListener('click',()=>{const d=$('#bellDot');
   d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');openNotif();});
