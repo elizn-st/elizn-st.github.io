@@ -1,1 +1,61 @@
 # elizn-s.github.io
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ADPA — Governance Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <a class="logo" href="#/home"><span class="logo-mark">e&amp;</span><span class="logo-word">ADPA</span></a>
+        <div class="crumb-wrap">
+          <button class="back-btn" id="backBtn" aria-label="Go back"><i class="ph ph-arrow-left"></i></button>
+          <nav class="breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="featured-icon" aria-label="Search"><i class="ph ph-magnifying-glass"></i></button>
+        <button class="featured-icon" aria-label="AI analyst" data-go="chat"><i class="ph ph-chats"></i></button>
+        <button class="featured-icon" id="bellBtn" aria-label="Notifications">
+          <i class="ph ph-bell"></i><span class="indicator" id="bellDot"></span></button>
+      </div>
+    </header>
+
+    <div class="body">
+      <aside class="sidebar">
+        <div class="nav-group" id="navGroup"></div>
+        <div class="nav-spacer"></div>
+        <button class="nav-item" id="collapseBtn">
+          <span class="nav-icon"><i class="ph ph-sidebar-simple"></i></span>
+          <span class="nav-label collapse-label">Collapse panel</span></button>
+        <div class="nav-divider"></div>
+        <div class="profile-card">
+          <span class="avatar">AK</span>
+          <span class="profile-info">
+            <span class="profile-name">Aisha</span>
+            <span class="profile-role">Finance · Senior Analyst</span></span>
+        </div>
+      </aside>
+
+      <aside class="chat-sb" id="chatSb" hidden></aside>
+
+      <div class="content-area">
+        <main class="wrap" id="view" tabindex="-1"></main>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
