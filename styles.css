@@ -521,7 +521,8 @@ color:#fff;border-radius:var(--r8);box-shadow:var(--sh-p);font-size:13px;animati
   --dv-app-str:#008042;    /* approved bar stroke */
   --dv-app-lbl:#5BAB84;    /* approved legend label */
   --dv-rej:#CC0000;
-  --dv-rev:#4375F4;        /* revenue line is blue */
+  --dv-rev:#4375F4;        /* revenue legend label */
+  --dv-rev-line:#2563EB;   /* revenue line stroke, per the file */
 }
 
 /* legend items are checkboxes, coloured per series */

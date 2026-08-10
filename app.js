@@ -115,7 +115,7 @@ function comboC(){
 <text class="cat-label" x="${cx}" y="${h-4}" text-anchor="middle">${lab}</text>`;});
   const p=COMBO.map(([,,,rv],i)=>[pl+slot*i+slot/2,yR(rv)]);
   const ln=p.map((q,i)=>`${i?'L':'M'}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' ');
-  const dots=p.map((q,i)=>`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3" fill="#fff" stroke="var(--dv-rev-line)" stroke-width="2" class="series-dot" data-s="2" style="animation-delay:${900+i*50}ms"><title>${COMBO[i][0]} · AED ${COMBO[i][3]}K</title></circle>`).join('');
+  const dots=p.map((q,i)=>`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="var(--dv-rev-line)" stroke-width="2.5" class="series-dot" data-s="2" style="animation-delay:${900+i*50}ms"><title>${COMBO[i][0]} · AED ${COMBO[i][3]}K</title></circle>`).join('');
   return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img"><defs><linearGradient id="gApp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--dv-app)" stop-opacity="1"/><stop offset=".85" stop-color="var(--dv-app)" stop-opacity="0"/></linearGradient></defs>${g}${b}
 <path d="${ln}" class="series-line" stroke="var(--dv-rev-line)" style="--len:1200;animation-delay:420ms" data-s="2"/>${dots}
 <text class="axis-title" x="10" y="${pt_+iH/2}" transform="rotate(-90 10 ${pt_+iH/2})" text-anchor="middle">Decisions</text>
