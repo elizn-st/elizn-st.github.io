@@ -44,6 +44,31 @@ const SESS=[['LLM / RAG analyst','Today','Deviation from recommendation this wee
 ['Competitor price cuts','Jul 24','Competitor B price cut impact on iPad Air 11',0],
 ['Seasonal demand dip','Jul 18','Seasonal demand dip and recommendation delta',0]];
 
+
+/* ---------- Decision history: full audit log ---------- */
+const LOG=[
+['Aug 06, 2026','09:12','iPhone 15 Pro 256GB','AED 3,899','AED 3,749','Aligned with competitor position','Aisha K.','approved',1],
+['Aug 06, 2026','09:08','AirPods Pro 2','AED 999','AED 929','Promotional clearance','Aisha K.','approved',0],
+['Aug 05, 2026','17:41','iPad Air 11 256GB','AED 2,599','AED 2,399','Below margin floor','Aisha K.','rejected',1],
+['Aug 05, 2026','16:20','Galaxy Watch 6','AED 1,099','AED 1,149','Low stock, rising demand','Omar H.','approved',0],
+['Aug 05, 2026','14:03','Xiaomi 14 128GB','AED 1,799','AED 1,749','Manual override — kept above floor','Omar H.','overridden',1],
+['Aug 04, 2026','11:55','Samsung Galaxy S24','AED 3,299','AED 3,299','Demand stable, no change','System','approved',0],
+['Aug 04, 2026','10:31','MacBook Air M3','AED 4,799','AED 4,599','Competitor price cut 5%','Aisha K.','approved',1],
+['Aug 03, 2026','18:12','Pixel 8 Pro','AED 2,899','AED 2,999','Stock shortage guardrail','System','rejected',0]];
+
+/* ---------- Notifications drawer ---------- */
+const NOTIF=[
+['Today',[
+ ['critical','warning-octagon','Stale data from CSS source > 6h','Competitor feed has not refreshed since 03:10. Recommendations may be based on old prices.','35 minutes ago',1],
+ ['warning','warning','Competitor cut price by 12% — Smartphones','Competitor A dropped iPhone 15 Pro by 12%. 14 SKUs affected.','1 h 12 minutes ago',1],
+ ['success','check-circle','Batch cycle completed successfully','128 recommendations generated for cycle Aug 05–11.','2 h 5 minutes ago',0]]],
+['Yesterday',[
+ ['info','info','Update ready','Pricing engine v2.4 is available with improved elasticity modelling.','1 day ago',0],
+ ['warning','warning','Licensed feed is 5 h stale','Source freshness dropped below the 4 h threshold.','1 day ago',0]]],
+['Earlier',[
+ ['success','check-circle','Guardrails updated','Margin floor raised to 18% for Accessories.','Aug 03',0],
+ ['info','info','New reason code added','“Seasonal clearance” is now available in the decision panel.','Aug 01',0]]]];
+
 /* ---------- charts ---------- */
 function spark(dir){
   const u=[14,17,15,20,18,23,21,26,24,29,27,33],d=[30,26,28,23,25,20,22,17,19,15,17,12];
@@ -85,14 +110,14 @@ function comboC(){
 <text class="axis-text" x="${pl+iW+6}" y="${y+3}">${Math.round(mnR+(v/maxD)*(mxR-mnR))}</text>`;}
   let b='';
   COMBO.forEach(([lab,a,r],i)=>{const cx=pl+slot*i+slot/2;
-    b+=`<rect class="bar" x="${cx-bw/2}" y="${yD(a)}" width="${bw}" height="${(a/maxD)*iH}" fill="url(#gApp)" stroke="var(--dv-app-str)" stroke-width="1" data-s="0" style="animation-delay:${i*55}ms"><title>${lab} · Approved ${a}</title></rect>
+    b+=`<rect class="bar" x="${cx-bw/2}" y="${yD(a)}" width="${bw}" height="${(a/maxD)*iH}" fill="url(#gApp)" data-s="0" style="animation-delay:${i*55}ms"><title>${lab} · Approved ${a}</title></rect>
 <rect class="bar" x="${cx-bw/2}" y="${yD(a+r)}" width="${bw}" height="${(r/maxD)*iH}" fill="var(--dv-rej)" data-s="1" style="animation-delay:${i*55+40}ms"><title>${lab} · Rejected ${r}</title></rect>
 <text class="cat-label" x="${cx}" y="${h-4}" text-anchor="middle">${lab}</text>`;});
   const p=COMBO.map(([,,,rv],i)=>[pl+slot*i+slot/2,yR(rv)]);
   const ln=p.map((q,i)=>`${i?'L':'M'}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' ');
-  const dots=p.map((q,i)=>`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3" fill="#fff" stroke="var(--dv-rev)" stroke-width="2" class="series-dot" data-s="2" style="animation-delay:${900+i*50}ms"><title>${COMBO[i][0]} · AED ${COMBO[i][3]}K</title></circle>`).join('');
-  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img"><defs><linearGradient id="gApp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--dv-app)" stop-opacity="1"/><stop offset=".85" stop-color="var(--dv-app)" stop-opacity=".12"/></linearGradient></defs>${g}${b}
-<path d="${ln}" class="series-line" stroke="var(--dv-rev)" style="--len:1200;animation-delay:420ms" data-s="2"/>${dots}
+  const dots=p.map((q,i)=>`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3" fill="#fff" stroke="var(--dv-rev-line)" stroke-width="2" class="series-dot" data-s="2" style="animation-delay:${900+i*50}ms"><title>${COMBO[i][0]} · AED ${COMBO[i][3]}K</title></circle>`).join('');
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img"><defs><linearGradient id="gApp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--dv-app)" stop-opacity="1"/><stop offset=".85" stop-color="var(--dv-app)" stop-opacity="0"/></linearGradient></defs>${g}${b}
+<path d="${ln}" class="series-line" stroke="var(--dv-rev-line)" style="--len:1200;animation-delay:420ms" data-s="2"/>${dots}
 <text class="axis-title" x="10" y="${pt_+iH/2}" transform="rotate(-90 10 ${pt_+iH/2})" text-anchor="middle">Decisions</text>
 <text class="axis-title" x="${w-6}" y="${pt_+iH/2}" transform="rotate(90 ${w-6} ${pt_+iH/2})" text-anchor="middle">AED K</text></svg>`;
 }
@@ -104,12 +129,13 @@ function groupC(){
   for(let v=0;v<=mx;v+=500){g+=`<line class="grid-line" x1="${pl}" x2="${pl+iW}" y1="${Y(v)}" y2="${Y(v)}"/>
 <text class="axis-text" x="${pl-6}" y="${Y(v)+3}" text-anchor="end">AED ${v}</text>`;}
   let b='';
-  const cols=[['var(--dv2)','e&'],['var(--dv-or)','Competitor A'],['var(--dv-gr)','Competitor B']];
+  const cols=[['#950124','e&'],['#EA6C29','Competitor A'],['#0D9488','Competitor B']];
   COMP.forEach(([cat,e,a,bb],i)=>{
     const st=pl+grp*i+(grp-(bw*3+gap*2))/2;
-    [e,a,bb].forEach((v,j)=>{b+=`<rect class="bar" x="${st+j*(bw+gap)}" y="${Y(v)}" width="${bw}" height="${(Math.min(v,mx)/mx)*iH}" fill="${cols[j][0]}" data-s="${j}" style="animation-delay:${i*70+j*35}ms"><title>${cat} · ${cols[j][1]} ${aed(v)}</title></rect>`;});
+    [e,a,bb].forEach((v,j)=>{b+=`<rect class="bar" x="${st+j*(bw+gap)}" y="${Y(v)}" width="${bw}" height="${(Math.min(v,mx)/mx)*iH}" fill="url(#gG${j})" data-s="${j}" style="animation-delay:${i*70+j*35}ms"><title>${cat} · ${cols[j][1]} ${aed(v)}</title></rect>`;});
     b+=`<text class="cat-label" x="${pl+grp*i+grp/2}" y="${h-4}" text-anchor="middle">${cat}</text>`;});
-  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img">${g}${b}</svg>`;
+  const defs=cols.map((c,j)=>`<linearGradient id="gG${j}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}" stop-opacity="1"/><stop offset="1" stop-color="${c[0]}" stop-opacity=".10"/></linearGradient>`).join('');
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img"><defs>${defs}</defs>${g}${b}</svg>`;
 }
 function barsC(items){
   const w=960,h=170,pl=36,pr=8,pt_=22,pb=18,iW=w-pl-pr,iH=h-pt_-pb;
@@ -118,10 +144,11 @@ function barsC(items){
   let g='';for(let i=0;i<=3;i++){const y=pt_+iH-(i/3)*iH;g+=`<line class="grid-line" x1="${pl}" x2="${pl+iW}" y1="${y}" y2="${y}"/>`;}
   let b='';
   items.forEach(([lab,v,disp,c],i)=>{const cx=pl+slot*i+slot/2;
-    b+=`<rect class="bar" x="${cx-bw/2}" y="${Y(v)}" width="${bw}" height="${(v/mx)*iH}" rx="4" fill="${c}" style="animation-delay:${i*70}ms"><title>${lab}: ${disp}</title></rect>
+    b+=`<rect class="bar" x="${cx-bw/2}" y="${Y(v)}" width="${bw}" height="${(v/mx)*iH}" fill="url(#gS${i})" style="animation-delay:${i*70}ms"><title>${lab}: ${disp}</title></rect>
 <text class="axis-text" x="${cx}" y="${Y(v)-8}" text-anchor="middle">${disp}</text>
 <text class="cat-label" x="${cx}" y="${h-4}" text-anchor="middle">${lab}</text>`;});
-  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img">${g}${b}</svg>`;
+  const defs=items.map((it,i)=>`<linearGradient id="gS${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${it[3]}" stop-opacity="1"/><stop offset="1" stop-color="${it[3]}" stop-opacity=".10"/></linearGradient>`).join('');
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img"><defs>${defs}</defs>${g}${b}</svg>`;
 }
 function gaugeC(val,fl,ce){
   const w=320,h=172,cx=160,cy=148,rO=116,rI=84,t=Math.max(0,Math.min(1,(val-fl)/(ce-fl)));
@@ -193,7 +220,7 @@ S.home=()=>({sec:null,page:'Home',w:892,html:`
 <span class="plan-go">${I('caret-right')}</span></span></button>
 </div></div>
 <div class="g2-col"><div class="panel">
-<div class="panel-head"><span class="panel-title">Alerts (3)</span><button class="panel-link">See all</button></div>
+<div class="panel-head"><span class="panel-title">Alerts (3)</span><button class="panel-link" data-notif>See all</button></div>
 <div class="notif-list">${ALERTS.map(([s,ic,t,tm],i)=>
 `<div class="notification ${s}" style="animation-delay:${120+i*70}ms"><span class="notif-icon">${I(ic,1)}</span>
 <span class="notif-text"><span class="notif-title">${E(t)}</span><span class="notif-time">${tm}</span></span></div>`).join('')}</div>
@@ -298,7 +325,7 @@ ${FACT.map(([n,v])=>`<div class="factor"><div class="factor-head"><span>${E(n)}<
 <div class="card pad">
 <div class="chart-head"><div class="chart-head-t row" style="flex-wrap:wrap">
 <h2 class="sec-title">Decision history</h2><span class="badge badge-neutral tnum">24 total · showing last 5</span></div>
-<button class="expand-btn" aria-label="Open full history">${I('arrow-square-out')}</button></div>
+<button class="expand-btn" aria-label="Open full history" data-go="history">${I('arrow-square-out')}</button></div>
 ${HIST.map(([d,r,s,c])=>`<div class="hist"><div class="grow">
 <div class="hist-date tnum">${d}</div><div class="hist-reason">${E(r)}</div></div>
 ${sb(s)}${c?`<span class="muted">${I('chat-circle')}</span>`:''}<span class="muted">${I('caret-right')}</span></div>`).join('')}
@@ -329,7 +356,7 @@ S.c2=()=>dash('c2','Competitor intelligence','Live pricing vs e& across tracked 
 <div class="chart-card" data-chart>
 ${chartHead('e& price vs competitors by category','e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',40)}
 ${groupC()}
-${legend([['e&','var(--dv2)'],['Competitor A','var(--dv-or)'],['Competitor B','var(--dv-gr)']])}</div>
+${legend([['e&','#950124'],['Competitor A','#EA6C29'],['Competitor B','#0D9488']])}</div>
 <div class="c2-cols">
 <div class="c2-col"><div class="card pad">
 <div class="chart-head"><div class="chart-head-t"><h2 class="sec-title">Competitor price movements feed</h2></div>
@@ -470,12 +497,101 @@ tRow(`<span class="tc">${s}</span><span class="tc">${nm(d)}</span>`)
 <input class="input grow" placeholder="Ask a question about a SKU or category" aria-label="Message"/>
 <button class="send-btn" type="submit" aria-label="Send">${I('paper-plane-tilt')}</button></form>`});
 
+
+S.history=()=>({sec:'Recommendations',page:'Decision history',w:1060,html:`
+<div class="q-head">
+<div class="q-title"><h1 class="page-title">Decision history</h1>
+<span class="chip-sm">Full audit log · cycle Aug 05–11</span></div>
+<button class="btn" data-toast="Audit log exported">${I('export')} Export log</button>
+</div>
+
+<div class="kpi-row">
+${kpi('Decisions logged','1,284','+118','up',0)}
+${kpi('Approved','86.4%','+2.1pp','up',0,'pos')}
+${kpi('Rejected','9.2%','-1.4pp','up',0,'neg')}
+${kpi('Overridden','4.4%','-0.7pp','up',0)}
+</div>
+
+<div class="q-filters">
+<div class="q-search-row"><label class="input-field grow">${I('magnifying-glass')}
+<input type="search" placeholder="Search by SKU, reason code or reviewer" aria-label="Search log"/></label>
+<div class="segmented" data-seg><button class="is-active">All</button><button>Approved</button>
+<button>Rejected</button><button>Overridden</button></div>
+<button class="icon-sq" aria-label="Date range">${I('calendar-blank')}</button></div>
+<div class="filters-results"><div class="applied" data-chips>
+<span class="chip is-active">Reviewer: Aisha K. <button aria-label="Remove">${I('x')}</button></span>
+<span class="chip is-active">Cycle: Aug 05–11 <button aria-label="Remove">${I('x')}</button></span>
+</div><span class="vdiv"></span><span class="results-count tnum">8 of 1,284 entries</span></div>
+</div>
+
+<div class="tbl"><div class="tbl-scroll">
+${tRow(`<span class="tc-110">Date</span><span class="tc">SKU</span>
+<span class="tc-85">From</span><span class="tc-85">To</span>
+<span class="tc-215">Reason code</span><span class="tc-110">Reviewer</span>
+<span class="tc-110">Status</span><span class="tc-60"></span>`,1)}
+${LOG.map(([d,t,sku,from,to,reason,who,st,cm],i)=>tRow(
+`<span class="tc-110"><span class="tnum">${d}</span><span class="tnote tnum">${t}</span></span>
+<span class="tc">${E(sku)}</span>
+<span class="tc-85 tnum muted">${from}</span>
+<span class="tc-85 tnum">${to}</span>
+<span class="tc-215">${E(reason)}</span>
+<span class="tc-110">${E(who)}</span>
+<span class="tc-110">${sb(st)}</span>
+<span class="tc-60 row" style="gap:8px;justify-content:flex-end">
+${cm?`<span class="muted" title="Has comment">${I('chat-circle')}</span>`:''}
+<span class="muted">${I('caret-right')}</span></span>`)
+.replace('class="trow body"',`class="trow body" style="animation-delay:${i*40}ms"`)).join('')}
+</div></div>
+<nav class="pagination">
+<button class="pg">${I('caret-left')} Previous</button>
+<button class="pg is-active">1</button><button class="pg">2</button><button class="pg">3</button>
+<span class="pg dots">...</span><button class="pg">161</button>
+<button class="pg">Next ${I('caret-right')}</button></nav>`});
+
 S.rules=()=>({sec:null,page:'Rules',w:892,html:`
 <div class="card pad" style="text-align:center;padding:var(--s48)">
 <h1 class="page-title" style="margin-bottom:var(--s8)">Pricing rules</h1>
 <p class="page-sub" style="max-width:440px;margin:0 auto var(--s16)">Guardrails, floors and ceilings live here.
 The Finance role has read-only access this cycle.</p>
 <button class="btn" data-go="home">Back to home</button></div>`});
+
+
+/* ---------- Notifications drawer ---------- */
+function openNotif(){
+  const d=$('#notifDrawer');
+  if(!d.dataset.b){
+    d.innerHTML=`<div class="nd-head">
+<div><h2 class="nd-title">Notifications</h2><p class="nd-sub tnum">3 unread · 7 total</p></div>
+<div class="row" style="gap:8px">
+<button class="btn" data-toast="All notifications marked as read">${I('checks')} Mark all read</button>
+<button class="icon-sq" id="notifClose" aria-label="Close">${I('x')}</button></div></div>
+<div class="nd-tabs" data-seg2>
+<button class="nd-tab is-active">All</button><button class="nd-tab">Critical</button>
+<button class="nd-tab">Warnings</button><button class="nd-tab">Updates</button></div>
+<div class="nd-body">${NOTIF.map(([grp,items])=>`
+<div class="nd-group"><div class="nd-group-label">${grp}</div>
+${items.map(([sev,ic,title,body,time,unread],i)=>`
+<article class="nd-item ${sev} ${unread?'is-unread':''}" style="animation-delay:${60+i*50}ms">
+<span class="nd-icon">${I(ic,1)}</span>
+<div class="grow"><div class="nd-item-head"><span class="nd-item-title">${E(title)}</span>
+${unread?'<span class="nd-dot"></span>':''}</div>
+<p class="nd-item-body">${E(body)}</p>
+<div class="nd-meta"><span class="nd-time">${time}</span>
+<button class="nd-link" data-toast="Opening related screen">View details ${I('arrow-right')}</button></div></div>
+</article>`).join('')}</div>`).join('')}</div>
+<div class="nd-foot"><button class="btn" style="width:100%" data-toast="Opening alerts centre">
+Open alerts centre ${I('arrow-right')}</button></div>`;
+    d.dataset.b='1';
+  }
+  $('#scrim').classList.add('is-on');
+  d.classList.add('is-open');
+  document.body.style.overflow='hidden';
+}
+function closeNotif(){
+  $('#scrim').classList.remove('is-on');
+  $('#notifDrawer').classList.remove('is-open');
+  document.body.style.overflow='';
+}
 
 /* ---------- router ---------- */
 const hist=[];
@@ -547,6 +663,10 @@ document.addEventListener('click',e=>{
   if(p){p.classList.add('pressed');setTimeout(()=>p.classList.remove('pressed'),80);}
   const g=e.target.closest('[data-go]');
   if(g&&!g.disabled){e.preventDefault();hist.push(location.hash);location.hash='#/'+g.dataset.go;return;}
+  if(e.target.closest('[data-notif]')){openNotif();return;}
+  if(e.target.closest('#notifClose')){closeNotif();return;}
+  const nt=e.target.closest('[data-seg2] .nd-tab');
+  if(nt){$$('[data-seg2] .nd-tab').forEach(b=>b.classList.remove('is-active'));nt.classList.add('is-active');return;}
   const t=e.target.closest('[data-toast]');if(t){toast(t.dataset.toast);return;}
   const cx=e.target.closest('[data-chips] .chip button');
   if(cx){const c=cx.closest('.chip');c.classList.add('removing');setTimeout(()=>c.remove(),200);return;}
@@ -588,7 +708,9 @@ The strongest signal is competitor movement in Smartphones, which drove 46% of t
 $('#collapseBtn').addEventListener('click',()=>$('#app').classList.toggle('is-collapsed'));
 $('#backBtn').addEventListener('click',()=>{if(hist.length)location.hash=hist.pop();else history.back();});
 $('#bellBtn').addEventListener('click',()=>{const d=$('#bellDot');
-  d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');toast('3 unread alerts');});
+  d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');openNotif();});
+$('#scrim').addEventListener('click',closeNotif);
+addEventListener('keydown',e=>{if(e.key==='Escape')closeNotif();});
 setInterval(()=>{const d=$('#bellDot');d.classList.remove('is-pulsing');void d.offsetWidth;d.classList.add('is-pulsing');},12000);
 addEventListener('hashchange',()=>render(location.hash.replace(/^#\/?/,'')||'home'));
 render(location.hash.replace(/^#\/?/,'')||'home');
