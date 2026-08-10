@@ -635,3 +635,20 @@ transition:color 140ms,gap 140ms}
 
 /* decision history: two-line date cell */
 .tc-110 .tnote{margin-top:1px}
+
+/* ---- notification drawer: small text follows the severity colours used on Home ---- */
+.nd-item.critical .nd-item-body,.nd-item.critical .nd-time,.nd-item.critical .nd-link{color:var(--bad-t)}
+.nd-item.warning  .nd-item-body,.nd-item.warning  .nd-time,.nd-item.warning  .nd-link{color:var(--warn-t)}
+.nd-item.success  .nd-item-body,.nd-item.success  .nd-time,.nd-item.success  .nd-link{color:var(--ok)}
+.nd-item.info     .nd-item-body,.nd-item.info     .nd-time,.nd-item.info     .nd-link{color:var(--info)}
+.nd-item .nd-link:hover{opacity:.75}
+.nd-body{padding-bottom:var(--s24)}
+
+/* ---- compact tables (inside chat answers) never force a horizontal scroll ---- */
+.tbl.compact .tbl-scroll{overflow-x:visible}
+.tbl.compact .tbl-scroll>.trow{min-width:0}
+.tbl.compact .trow{gap:var(--s16)}
+
+/* ---- chat sits on the bottom edge: thread grows upward, composer stays put ---- */
+.wrap.is-bottom{min-height:calc(100vh - var(--top-h));justify-content:flex-end}
+.wrap.is-bottom .thread{margin-top:auto}

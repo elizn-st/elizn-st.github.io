@@ -469,7 +469,7 @@ ${[['Price','AED 3,899','AED 3,749','AED 3,743','',''],
 .replace('class="trow body"',`class="trow body" style="animation-delay:${i*45}ms"`)).join('')}
 </div></div>`});
 
-S.chat=()=>({sec:null,page:'AI analyst',w:788,chatSb:1,html:`
+S.chat=()=>({sec:null,page:'AI analyst',w:788,chatSb:1,bottom:1,html:`
 <div class="thread" data-thread>
 <div class="msg-row user"><div class="msg user">
 <div>Show me the SKUs with the largest deviation from the recommendation this week</div>
@@ -477,8 +477,8 @@ S.chat=()=>({sec:null,page:'AI analyst',w:788,chatSb:1,html:`
 <div class="msg-row bot"><div class="msg bot">
 <p>For the Aug 05–11 cycle, the largest deviation is <strong>iPad Air 11 256GB</strong>: the recommendation is
 7% below the current price, driven by a seasonal demand dip and price cut from Competitor B.</p>
-<div class="tbl"><div class="tbl-scroll">
-${tRow('<span class="tc">SKU</span><span class="tc">Δ%</span>',1).replace('min-width:760px','')}
+<div class="tbl compact"><div class="tbl-scroll">
+${tRow('<span class="tc">SKU</span><span class="tc">Δ%</span>',1)}
 ${[['iPad Air 11 256GB',-7.7],['AirPods Pro 2',-7.0],['Xiaomi 14 128GB',-5.6]].map(([s,d],i)=>
 tRow(`<span class="tc">${s}</span><span class="tc">${nm(d)}</span>`)
 .replace('class="trow body"',`class="trow body" style="animation-delay:${300+i*60}ms"`)).join('')}
@@ -579,8 +579,7 @@ ${unread?'<span class="nd-dot"></span>':''}</div>
 <div class="nd-meta"><span class="nd-time">${time}</span>
 <button class="nd-link" data-toast="Opening related screen">View details ${I('arrow-right')}</button></div></div>
 </article>`).join('')}</div>`).join('')}</div>
-<div class="nd-foot"><button class="btn" style="width:100%" data-toast="Opening alerts centre">
-Open alerts centre ${I('arrow-right')}</button></div>`;
+`;
     d.dataset.b='1';
   }
   $('#scrim').classList.add('is-on');
@@ -617,6 +616,7 @@ function render(r){
   }
   const v=$('#view');
   v.style.setProperty('--cmax',s.w+'px');
+  v.classList.toggle('is-bottom',!!s.bottom);
   v.innerHTML=s.html;
   v.focus({preventScroll:true});
   scrollTo({top:0,behavior:RM?'auto':'smooth'});
