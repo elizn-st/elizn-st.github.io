@@ -1,4 +1,17 @@
-export type DecisionStatus = 'approved' | 'pending' | 'rejected' | 'flagged' | 'overridden';
+/**
+ * Runtime list as well as a type: validating a Console-edited document needs
+ * the allowed values at runtime, and deriving the union from the array keeps
+ * the two from drifting apart.
+ */
+export const DECISION_STATUSES = [
+  'approved',
+  'pending',
+  'rejected',
+  'flagged',
+  'overridden',
+] as const;
+
+export type DecisionStatus = (typeof DECISION_STATUSES)[number];
 
 export interface QueueRow {
   readonly sku: string;

@@ -1,0 +1,83 @@
+rules_version = '2';
+
+// The default posture here is deny. Every collection opts in explicitly below,
+// so a collection introduced during the mock migration stays unreadable until
+// someone writes a rule for it. That way the failure mode is a loud permission
+// error in development rather than data quietly readable in production.
+//
+// Two things bypass these rules entirely, which is why the client-write rules
+// can stay closed without blocking anyone who legitimately needs to edit:
+//
+//   * the Firebase Console, which acts with project IAM privileges -- so a
+//     customer granted Console access edits documents directly, and every
+//     app instance sees it live through onSnapshot; and
+//   * the Admin SDK, used by the seed script and any pipeline writes.
+//
+// Rules govern the client SDK only: the web app, and anyone who lifts the
+// (public, non-secret) web config out of the bundle and queries the database
+// themselves. Assume the latter will happen.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Set with the Admin SDK as a custom claim, never from a document: reading
+    // a role out of Firestore would mean a get() inside every rule evaluation,
+    // billed as a document read on every access. No user carries this claim
+    // yet, so today it denies exactly like `if false` -- it is here so an
+    // in-app editing screen becomes a claim grant rather than a rules rewrite.
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    // ---- org-wide read-only data --------------------------------------------
+    // Pricing recommendations (src/data/queue.ts), the decision audit trail
+    // (history.ts), the analytics series behind the dashboards (series.ts,
+    // dashboards.ts) and lookup lists (filters.ts, navigation.ts).
+    //
+    // Approving or rejecting a recommendation is a decision, not an edit: it
+    // belongs in `decisions` as a new document, so `recommendations` itself
+    // takes no client writes.
+
+    match /recommendations/{recommendationId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /decisions/{decisionId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /analytics/{documentId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /config/{documentId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---- per-user state ------------------------------------------------------
+    // Notification read state (notifications.ts `unread`) and chat threads
+    // (chat.ts) are one user's data, so they are keyed by uid and readable
+    // only by that user. The recursive wildcard covers subcollections added
+    // later without needing a rule per subcollection.
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /{document=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+  }
+}
