@@ -4,6 +4,7 @@ import { Icon } from '@/components/common/Icon';
 import { ToastButton } from '@/components/common/ToastButton';
 import { KpiCard } from '@/components/common/KpiCard';
 import { Switch } from '@/components/common/Switch';
+import { useAuth } from '@/state/AuthContext';
 import type { ScreenMeta } from '@/routing/screens';
 
 export const profileMeta: ScreenMeta = { section: null, page: 'Profile', width: 1060 };
@@ -12,6 +13,8 @@ const TIME_ZONES = ['Gulf Standard Time (GST, +4)', 'UTC'];
 const LANGUAGES = ['English', 'العربية — not in scope this phase'];
 
 export function ProfileScreen() {
+  const { signOut } = useAuth();
+
   return (
     <>
       <div className="pf-hero card">
@@ -29,9 +32,9 @@ export function ProfileScreen() {
           <ToastButton className="btn" message="Profile editor opened">
             <Icon name="pencil-simple" /> Edit profile
           </ToastButton>
-          <ToastButton className="btn" message="Signed out">
+          <button type="button" className="btn" onClick={() => void signOut()}>
             <Icon name="sign-out" /> Sign out
-          </ToastButton>
+          </button>
         </div>
       </div>
 
