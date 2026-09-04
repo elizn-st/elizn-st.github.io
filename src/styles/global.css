@@ -869,22 +869,6 @@ transition:opacity 220ms var(--eo)}
   .tabs{margin:0 calc(var(--s16)*-1);padding:0 var(--s16)}
   .tab{padding:10px var(--s12);font-size:13px}
 
-  /* ---- tables become stacked cards, no horizontal scrolling ---- */
-  .tbl-scroll{overflow-x:visible}
-  .tbl-scroll>.trow,.trow{min-width:0}
-  .trow.head{display:none}
-  .trow.body{display:block;padding:var(--s12) var(--s16);gap:0}
-  .trow.body>*{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s12);
-    padding:3px 0;font-size:14px;text-align:left!important;flex:none!important;width:auto!important}
-  .trow.body>*[data-label]::before{content:attr(data-label);font-size:12px;color:var(--tx3);
-    flex:none;font-weight:400}
-  .trow.body>*:first-child{font-weight:600;padding-bottom:var(--s8);margin-bottom:var(--s4);
-    border-bottom:1px solid var(--border)}
-  .trow.body>*:first-child::before{display:none}
-  .trow.body .tnote{margin-top:2px}
-  .trow.body>.tc-check{justify-content:flex-start}
-  .trow.body>.tc-check::before{display:none}
-
   /* detail / chat / drawers */
   .d-header{gap:var(--s12);padding:var(--s12)}
   .thumb{width:44px;height:44px}
@@ -950,3 +934,57 @@ transition:opacity 220ms var(--eo)}
   .item-day:hover{transform:none}
   .nav-item,.session,.convo{min-height:44px}
 }
+
+@media (max-width:1007px){
+  .tbl-scroll{overflow-x:visible}
+  .tbl-scroll>.trow,.trow{min-width:0}
+  .trow.head{display:none}
+  .trow.body{display:block;padding:var(--s12) var(--s16);gap:0}
+  .trow.body>*{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s12);
+    padding:3px 0;font-size:14px;text-align:left!important;flex:none!important;width:auto!important}
+  .trow.body>*[data-label]::before{content:attr(data-label);font-size:12px;color:var(--tx3);
+    flex:none;font-weight:400}
+  .trow.body>*:first-child{font-weight:600;padding-bottom:var(--s8);margin-bottom:var(--s4);
+    border-bottom:1px solid var(--border)}
+  .trow.body>*:first-child::before{display:none}
+  .trow.body .tnote{margin-top:2px}
+  .trow.body>.tc-check{justify-content:flex-start}
+  .trow.body>.tc-check::before{display:none}
+}
+
+/* ---- breadcrumb: shrink and ellipsize rather than wrap inside a 60px bar ---- */
+@media (max-width:1180px){
+  .topbar-left,.crumb-wrap,.breadcrumb{min-width:0}
+  .crumb-page{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+
+@media (max-width:860px){
+  /* .q-title carries flex:1 1 300px for the row layout. Once .q-head and
+     .cd-head turn into columns that basis becomes a 300px minimum *height*,
+     leaving ~240px of dead space above the action buttons. */
+  .q-title{flex:0 0 auto}
+
+  /* .cd-head .dash-actions wins over the mobile .dash-actions reset with its
+     desktop margin-left:auto and align-self:flex-start, so the range switch
+     and Export button hugged the right edge instead of stretching with the
+     rest of the stacked toolbar. */
+  .cd-head .dash-actions{margin-left:0;align-self:stretch}
+
+  /* charts get the horizontal room back — at 390px the plot box was only
+     324px wide, which crowds four category labels into 69px slots */
+  .chart-card{padding:var(--s16) 10px}
+
+  /* ---- touch targets below the 24px minimum ---- */
+  .checkbox{width:24px;height:24px}
+  .chip button{padding:10px 8px;margin:-10px -8px}
+  .panel-link{padding:12px 8px;margin:-12px -8px}
+  .expand-btn{width:36px;height:36px}
+}
+
+/* ---- inline alerts placed directly in the page column ----
+   .notification declares its own `animation`, which replaces the entrance
+   animation .wrap>* sets. nIn fills `backwards`, so once it finishes the
+   element falls back to the opacity:0 base style and never becomes visible —
+   the privacy notice on Customer behaviour was invisible at every width.
+   Giving it a visible resting state keeps the slide-in and fixes the end. */
+.wrap>.notification{opacity:1;transform:none}
