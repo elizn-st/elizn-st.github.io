@@ -1,5 +1,5 @@
 import { Fragment, useRef } from 'react';
-import { CATEGORY_PRICES } from '@/data/series';
+import { usePortalData } from '@/state/DataContext';
 import { aed } from '@/lib/format';
 import { EMPTY_HIDDEN, hiddenClass, type HiddenSeries } from './types';
 import { layoutCategoryLabels, useChartViewBoxWidth } from './geometry';
@@ -10,13 +10,6 @@ const PAD_LEFT = 56;
 const PAD_RIGHT = 8;
 const PAD_TOP = 6;
 const BASE_PAD_BOTTOM = 18;
-const MAX = 3000;
-
-const RETAILERS = [
-  { color: '#950124', name: 'e&' },
-  { color: '#EA6C29', name: 'Competitor A' },
-  { color: '#0D9488', name: 'Competitor B' },
-] as const;
 
 /** e& against both tracked competitors, grouped by category. */
 export function GroupedBarChart({
@@ -24,16 +17,18 @@ export function GroupedBarChart({
 }: {
   readonly hiddenSeries?: HiddenSeries;
 }) {
+  const { series } = usePortalData();
+  const { retailers: RETAILERS, maxCategoryPrice: MAX } = series.chartConfig;
   const svgRef = useRef<SVGSVGElement>(null);
   const width = useChartViewBoxWidth(svgRef);
 
   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
-  const group = innerWidth / CATEGORY_PRICES.length;
+  const group = innerWidth / series.categoryPrices.length;
   const barWidth = group * 0.16;
   const gap = barWidth * 0.18;
 
   const labels = layoutCategoryLabels(
-    CATEGORY_PRICES.map((row) => row.category),
+    series.categoryPrices.map((row) => row.category),
     group,
   );
   const innerHeight = HEIGHT - PAD_TOP - BASE_PAD_BOTTOM - labels.extraBottom;
@@ -69,7 +64,7 @@ export function GroupedBarChart({
         </Fragment>
       ))}
 
-      {CATEGORY_PRICES.map((row, index) => {
+      {series.categoryPrices.map((row, index) => {
         const start = PAD_LEFT + group * index + (group - (barWidth * 3 + gap * 2)) / 2;
         const values = [row.eand, row.competitorA, row.competitorB];
         return (

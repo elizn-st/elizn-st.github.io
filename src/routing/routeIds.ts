@@ -1,25 +1,30 @@
 /** Every route that resolves to a real screen in this build. */
-export type ScreenId =
-  | 'home'
-  | 'queue'
-  | 'detail'
-  | 'sim'
-  | 'chat'
-  | 'history'
-  | 'chartd'
-  | 'profile'
-  | 'rules'
-  | 'c1'
-  | 'c2'
-  | 'c3'
-  | 'c4'
-  | 'c5';
+export const SCREEN_IDS = [
+  'home',
+  'queue',
+  'detail',
+  'sim',
+  'chat',
+  'history',
+  'chartd',
+  'profile',
+  'rules',
+  'c1',
+  'c2',
+  'c3',
+  'c4',
+  'c5',
+] as const;
+
+export type ScreenId = (typeof SCREEN_IDS)[number];
 
 /**
  * Routes that can be addressed from the shell. `reports` and `admin` are
  * present in the sidebar but disabled this cycle, so they have no screen.
  */
-export type RouteId = ScreenId | 'reports' | 'admin';
+export const ROUTE_IDS = [...SCREEN_IDS, 'reports', 'admin'] as const;
+
+export type RouteId = (typeof ROUTE_IDS)[number];
 
 export const DEFAULT_ROUTE: ScreenId = 'home';
 

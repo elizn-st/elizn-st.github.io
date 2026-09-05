@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useChartFocus } from '@/state/ChartFocusContext';
 import { useRouter } from '@/routing/RouterContext';
 import { Icon } from '@/components/common/Icon';
@@ -7,19 +8,23 @@ import { KpiCard } from '@/components/common/KpiCard';
 import { ChartCard } from '@/components/common/ChartCard';
 import { Table, type TableColumn } from '@/components/common/Table';
 import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
-import { CHART_DETAILS } from './definitions';
+import { buildChartDetails } from './definitions';
+import { usePortalData } from '@/state/DataContext';
 
-const RANGE_OPTIONS = ['4W', '8W', '13W', 'ALL'];
-
-export const chartDetailMeta = ({ chartKey }: ScreenMetaInput): ScreenMeta => {
-  const definition = CHART_DETAILS[chartKey];
-  return { section: definition.section, page: definition.title, width: 1180 };
+export const chartDetailMeta = ({ chartKey, chartDetails }: ScreenMetaInput): ScreenMeta => {
+  const chart = chartDetails.copy.charts[chartKey];
+  return { section: chart.section, page: chart.title, width: 1180 };
 };
 
 export function ChartDetailScreen() {
   const { chartKey } = useChartFocus();
   const { navigate } = useRouter();
-  const definition = CHART_DETAILS[chartKey];
+  const { series, chartDetails } = usePortalData();
+  const copy = chartDetails.copy;
+  const definition = useMemo(
+    () => buildChartDetails(series, copy)[chartKey],
+    [series, copy, chartKey],
+  );
 
   const columns: TableColumn[] = definition.columns.map((header, index) => ({
     className: index === 0 ? 'tc-110' : 'tc',
@@ -41,7 +46,7 @@ export function ChartDetailScreen() {
         <button
           type="button"
           className="cd-back"
-          aria-label={`Back to ${definition.section}`}
+          aria-label={`${copy.backPrefix}${definition.section}`}
           onClick={() => navigate(definition.back)}
         >
           <Icon name="arrow-left" />
@@ -51,9 +56,9 @@ export function ChartDetailScreen() {
           <p className="page-sub">{definition.subtitle}</p>
         </div>
         <div className="dash-actions">
-          <Segmented options={RANGE_OPTIONS} defaultValue="8W" />
-          <ToastButton className="btn" message="Chart data exported">
-            <Icon name="export" /> Export data
+          <Segmented options={copy.rangeOptions} defaultValue={copy.defaultRange} />
+          <ToastButton className="btn" message={copy.exportMessage}>
+            <Icon name={copy.exportIcon} /> {copy.exportLabel}
           </ToastButton>
         </div>
       </div>
@@ -66,7 +71,7 @@ export function ChartDetailScreen() {
             label={stat.label}
             value={stat.value}
             delta={stat.delta || null}
-            direction={stat.direction}
+            direction={stat.direction || 'up'}
             tone={stat.direction === 'up' ? 'pos' : 'neg'}
           />
         ))}
@@ -79,13 +84,13 @@ export function ChartDetailScreen() {
       <div className="cd-cols">
         <div>
           <h2 className="sec-title-16" style={{ marginBottom: 'var(--s8)' }}>
-            Underlying data
+            {copy.dataTitle}
           </h2>
           <Table columns={columns} rows={rows} rowStaggerMs={35} />
         </div>
         <div>
           <h2 className="sec-title-16" style={{ marginBottom: 'var(--s8)' }}>
-            What the data shows
+            {copy.notesTitle}
           </h2>
           <div className="card pad cd-notes">
             {definition.notes.map((note) => (

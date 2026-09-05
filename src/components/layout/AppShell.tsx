@@ -7,9 +7,10 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useRouter } from '@/routing/RouterContext';
 import type { RouteId } from '@/routing/routeIds';
 import { isScreenId, SCREENS } from '@/routing/screenRegistry';
-import { resolveMeta, type ScreenMeta } from '@/routing/screens';
+import { resolveMeta, type ScreenMeta, type ScreenMetaInput } from '@/routing/screens';
 import { useChartFocus } from '@/state/ChartFocusContext';
 import { useOverlays } from '@/state/OverlayContext';
+import { usePortalData } from '@/state/DataContext';
 import { NotFoundScreen, notFoundMeta } from '@/screens/NotFoundScreen';
 import { NotificationsDrawer } from '@/components/overlays/NotificationsDrawer';
 import { FilterPopover } from '@/components/overlays/FilterPopover';
@@ -25,6 +26,7 @@ export function AppShell() {
   const { route } = useRouter();
   const { chartKey } = useChartFocus();
   const { openSearch, closeAll } = useOverlays();
+  const { series, navigation, boards, chartDetails } = usePortalData();
 
   const [collapsed, setCollapsed] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -33,14 +35,15 @@ export function AppShell() {
   useBodyScrollLock(navOpen);
 
   const resolved = useMemo(() => {
+    const input: ScreenMetaInput = { chartKey, series, navigation, boards, chartDetails };
     if (!isScreenId(route)) {
-      return { meta: notFoundMeta, screen: <NotFoundScreen key={route} route={route} /> };
+      return { meta: notFoundMeta(input), screen: <NotFoundScreen key={route} route={route} /> };
     }
     const definition = SCREENS[route];
     const Screen = definition.component;
-    const meta: ScreenMeta = resolveMeta(definition, { chartKey });
+    const meta: ScreenMeta = resolveMeta(definition, input);
     return { meta, screen: <Screen key={route} /> };
-  }, [route, chartKey]);
+  }, [route, chartKey, series, navigation, boards, chartDetails]);
 
   const { meta, screen } = resolved;
   const activeNav = isScreenId(route) ? navHighlightFor(route) : (route as RouteId);

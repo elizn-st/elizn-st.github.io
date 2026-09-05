@@ -1,7 +1,6 @@
 import { cx } from '@/lib/cx';
+import { usePortalData } from '@/state/DataContext';
 import { signedInt, toneOf } from '@/lib/format';
-import { FACTOR_CONTRIBUTIONS, GUARDRAILS, HISTORY_PREVIEW, REASON_CODES } from '@/data/detail';
-import { PRICE_HISTORY, WEEK_LABELS } from '@/data/series';
 import { useDelayedWidth } from '@/hooks/useDelayedWidth';
 import { useRouter } from '@/routing/RouterContext';
 import { Icon } from '@/components/common/Icon';
@@ -12,26 +11,26 @@ import { ChartCard } from '@/components/common/ChartCard';
 import { ChartHead } from '@/components/common/ChartHead';
 import { LineChart } from '@/components/charts/LineChart';
 import { GuardrailGauge } from '@/components/charts/GuardrailGauge';
-import type { ScreenMeta } from '@/routing/screens';
+import { breadcrumb } from '@/routing/screens';
+import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
 
-export const detailMeta: ScreenMeta = {
-  section: 'Recommendations',
-  page: 'Recommendation detail',
+export const detailMeta = ({ navigation }: ScreenMetaInput): ScreenMeta => ({
+  ...breadcrumb(navigation, 'detail'),
   width: 1060,
-};
+});
 
 const FACTOR_BASE_DELAY_MS = 260;
 const FACTOR_STAGGER_MS = 70;
 /** The bar reads as a share of the strongest factor, not of 100%. */
 const FACTOR_SCALE = 1.6;
 
-const GUARDRAIL_BANDS = [
-  { label: 'Safe', color: '#3DCC87' },
-  { label: 'Caution', color: '#EDA12F' },
-  { label: 'Near ceiling', color: '#E62E2E' },
-];
+/** Which of the three price series is filled; the rest is copy-driven. */
+const PRICE_SERIES_FILLED = [true, false, false];
 
 const asMoney = (value: number) => `AED ${Math.round(value).toLocaleString()}`;
+
+/** Button variants are layout, paired with the fetched action labels. */
+const DECISION_CLASSES = ['btn btn-approve', 'btn btn-danger', 'btn'];
 
 function FactorRow({
   name,
@@ -60,64 +59,74 @@ function FactorRow({
 }
 
 export function DetailScreen() {
+  const { detail, series } = usePortalData();
   const { navigate } = useRouter();
+  const copy = detail.copy;
+
+  const priceData = [
+    series.priceHistory.eand,
+    series.priceHistory.competitorA,
+    series.priceHistory.competitorB,
+  ];
 
   return (
     <>
       <div className="card d-header">
         <span className="thumb">
-          <Icon name="device-mobile" />
+          <Icon name={copy.icon} />
         </span>
         <div className="grow">
-          <h1 className="d-title">iPhone 15 Pro 256GB</h1>
+          <h1 className="d-title">{copy.title}</h1>
           <div className="d-meta">
-            <span className="chip-sm">Smartphones</span>
-            <span className="chip-sm">Apple</span>
-            <span className="chip-sm tnum">SKU-114872</span>
+            {copy.chips.map((chip, index) => (
+              <span
+                key={chip}
+                className={index === copy.chips.length - 1 ? 'chip-sm tnum' : 'chip-sm'}
+              >
+                {chip}
+              </span>
+            ))}
           </div>
         </div>
         <div className="price-display">
           <div className="p-cur">
-            <div className="price-label">Current price</div>
-            <div className="price-value tnum">AED 3,899</div>
+            <div className="price-label">{copy.currentLabel}</div>
+            <div className="price-value tnum">{copy.currentValue}</div>
           </div>
           <span className="muted">
             <Icon name="arrow-right" />
           </span>
           <div className="p-rec">
-            <div className="price-label">Recommended</div>
-            <div className="price-value tnum">AED 3,749</div>
+            <div className="price-label">{copy.recommendedLabel}</div>
+            <div className="price-value tnum">{copy.recommendedValue}</div>
           </div>
-          <span className="pct down tnum">−3.8%</span>
+          <span className="pct down tnum">{copy.deltaValue}</span>
         </div>
       </div>
 
       <ChartCard
         head={
           <ChartHead
-            title="Price history"
-            subtitle="e& vs tracked competitors over the last 8 weeks"
+            title={copy.priceChart.title}
+            subtitle={copy.priceChart.subtitle}
             padLeft={40}
             chartKey="b2-price"
           />
         }
-        xAxisLabels={WEEK_LABELS}
-        legend={[
-          { label: 'e&', color: 'var(--dv1)' },
-          { label: 'Competitor A', color: 'var(--dv2)' },
-          { label: 'Competitor B', color: 'var(--dv3)' },
-        ]}
+        xAxisLabels={series.weekLabels}
+        legend={copy.priceLegend}
       >
         {(hidden) => (
           <LineChart
-            labels={WEEK_LABELS}
+            labels={series.weekLabels}
             format={asMoney}
             hiddenSeries={hidden}
-            series={[
-              { name: 'e&', color: 'var(--dv1)', area: true, data: PRICE_HISTORY.eand },
-              { name: 'Competitor A', color: 'var(--dv2)', data: PRICE_HISTORY.competitorA },
-              { name: 'Competitor B', color: 'var(--dv3)', data: PRICE_HISTORY.competitorB },
-            ]}
+            series={copy.priceLegend.map((entry, index) => ({
+              name: entry.label,
+              color: entry.color,
+              area: PRICE_SERIES_FILLED[index] ?? false,
+              data: priceData[index] ?? [],
+            }))}
           />
         )}
       </ChartCard>
@@ -130,10 +139,10 @@ export function DetailScreen() {
             </span>
             <span className="grow">
               <span className="sec-title" style={{ display: 'block' }}>
-                Run scenario simulation
+                {copy.simCardTitle}
               </span>
               <span className="sec-sub" style={{ display: 'block' }}>
-                Test alternative prices and see the predicted revenue impact
+                {copy.simCardSubtitle}
               </span>
             </span>
             <span className="plan-go">
@@ -143,15 +152,15 @@ export function DetailScreen() {
 
           <div className="card pad">
             <h2 className="sec-title" style={{ marginBottom: 'var(--s12)' }}>
-              Position within price guardrails
+              {copy.guardrailTitle}
             </h2>
             <GuardrailGauge
-              value={GUARDRAILS.value}
-              floor={GUARDRAILS.floor}
-              ceiling={GUARDRAILS.ceiling}
+              value={detail.guardrails.value}
+              floor={detail.guardrails.floor}
+              ceiling={detail.guardrails.ceiling}
             />
             <div className="chart-legend" style={{ justifyContent: 'center', paddingTop: 0 }}>
-              {GUARDRAIL_BANDS.map((band) => (
+              {copy.guardrailBands.map((band) => (
                 <span key={band.label} className="legend-pill is-on">
                   <span className="sw" style={{ background: band.color }} />
                   {band.label}
@@ -162,9 +171,9 @@ export function DetailScreen() {
 
           <div className="card pad">
             <h2 className="sec-title" style={{ marginBottom: 'var(--s4)' }}>
-              Factor contribution
+              {copy.factorTitle}
             </h2>
-            {FACTOR_CONTRIBUTIONS.map((factor, index) => (
+            {detail.factorContributions.map((factor, index) => (
               <FactorRow key={factor.name} name={factor.name} value={factor.value} index={index} />
             ))}
           </div>
@@ -173,59 +182,59 @@ export function DetailScreen() {
         <div className="d-col">
           <div className="card pad">
             <h2 className="sec-title" style={{ marginBottom: 'var(--s12)' }}>
-              Decision
+              {copy.decisionTitle}
             </h2>
             <label className="field-label" htmlFor="rc">
-              Reason code
+              {copy.reasonLabel}
             </label>
             <select
               className="select"
               id="rc"
               style={{ marginBottom: 'var(--s12)' }}
-              defaultValue={REASON_CODES[0]}
+              defaultValue={detail.reasonCodes[0]}
             >
-              {REASON_CODES.map((code) => (
+              {detail.reasonCodes.map((code) => (
                 <option key={code}>{code}</option>
               ))}
             </select>
             <label className="field-label" htmlFor="cm">
-              Comment
+              {copy.commentLabel}
             </label>
             <textarea
               className="textarea"
               id="cm"
-              placeholder="Optional comment on this decision"
+              placeholder={copy.commentPlaceholder}
               style={{ marginBottom: 'var(--s16)' }}
             />
             <div className="d-actions">
-              <ToastButton className="btn btn-approve" message="Recommendation accepted">
-                Accept
-              </ToastButton>
-              <ToastButton className="btn btn-danger" message="Recommendation rejected">
-                Reject
-              </ToastButton>
-              <ToastButton className="btn" message="Override opened">
-                Override
-              </ToastButton>
+              {copy.decisionActions.map((action, index) => (
+                <ToastButton
+                  key={action.label}
+                  className={DECISION_CLASSES[index] ?? 'btn'}
+                  message={action.message}
+                >
+                  {action.label}
+                </ToastButton>
+              ))}
             </div>
           </div>
 
           <div className="card pad">
             <div className="chart-head">
               <div className="chart-head-t row" style={{ flexWrap: 'wrap' }}>
-                <h2 className="sec-title">Decision history</h2>
-                <span className="badge badge-neutral tnum">24 total · showing last 5</span>
+                <h2 className="sec-title">{copy.historyTitle}</h2>
+                <span className="badge badge-neutral tnum">{copy.historyBadge}</span>
               </div>
               <button
                 type="button"
                 className="expand-btn"
-                aria-label="Open full history"
+                aria-label={copy.historyAriaLabel}
                 onClick={() => navigate('history')}
               >
                 <Icon name="arrow-square-out" />
               </button>
             </div>
-            {HISTORY_PREVIEW.map((entry) => (
+            {detail.historyPreview.map((entry) => (
               <div key={entry.date} className="hist">
                 <div className="grow">
                   <div className="hist-date tnum">{entry.date}</div>

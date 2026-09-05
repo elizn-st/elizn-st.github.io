@@ -1,3 +1,4 @@
+import type { KpiSpec, PaginationSpec } from './ui';
 import type { DecisionStatus } from './queue';
 
 export interface AuditEntry {
@@ -101,4 +102,58 @@ export const AUDIT_LOG: readonly AuditEntry[] = [
     status: 'rejected',
     hasComment: false,
   },
+];
+
+export interface HistoryCopy {
+  readonly title: string;
+  readonly chip: string;
+  readonly exportLabel: string;
+  readonly exportMessage: string;
+  readonly searchPlaceholder: string;
+  readonly searchAriaLabel: string;
+  readonly statusFilters: readonly string[];
+  readonly defaultStatusFilter: string;
+  readonly appliedFilters: readonly string[];
+  readonly resultsCount: string;
+  /** Header labels, in column order. The trailing actions column has none. */
+  readonly columns: readonly string[];
+  readonly commentTitle: string;
+  readonly pagination: PaginationSpec;
+}
+
+export const HISTORY_COPY: HistoryCopy = {
+  title: 'Decision history',
+  chip: 'Full audit log · cycle Aug 05–11',
+  exportLabel: 'Export log',
+  exportMessage: 'Audit log exported',
+  searchPlaceholder: 'Search by SKU, reason code or reviewer',
+  searchAriaLabel: 'Search log',
+  statusFilters: ['All', 'Approved', 'Rejected', 'Overridden'],
+  defaultStatusFilter: 'All',
+  appliedFilters: ['Reviewer: Aisha K.', 'Cycle: Aug 05–11'],
+  resultsCount: '8 of 1,284 entries',
+  columns: ['Date', 'SKU', 'From', 'To', 'Reason code', 'Reviewer', 'Status'],
+  commentTitle: 'Has comment',
+  pagination: { pages: [1, 2, 3, 'dots', 161], active: 1 },
+};
+
+export const HISTORY_KPIS: readonly KpiSpec[] = [
+  {
+    label: 'Decisions logged',
+    value: '1,284',
+    delta: '+118',
+    direction: 'up',
+    tone: '',
+    graph: false,
+  },
+  {
+    label: 'Approved',
+    value: '86.4%',
+    delta: '+2.1pp',
+    direction: 'up',
+    tone: 'pos',
+    graph: false,
+  },
+  { label: 'Rejected', value: '9.2%', delta: '-1.4pp', direction: 'up', tone: 'neg', graph: false },
+  { label: 'Overridden', value: '4.4%', delta: '-0.7pp', direction: 'up', tone: '', graph: false },
 ];

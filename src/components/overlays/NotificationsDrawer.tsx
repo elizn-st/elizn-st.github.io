@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { usePortalData } from '@/state/DataContext';
 import { cx } from '@/lib/cx';
-import { NOTIFICATION_GROUPS, NOTIFICATION_TABS } from '@/data/notifications';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useOverlays } from '@/state/OverlayContext';
 import { Icon } from '@/components/common/Icon';
@@ -10,8 +10,10 @@ const ITEM_BASE_DELAY_MS = 60;
 const ITEM_STAGGER_MS = 50;
 
 export function NotificationsDrawer() {
+  const { notifications } = usePortalData();
+  const copy = notifications.copy;
   const { notificationsOpen, closeNotifications } = useOverlays();
-  const [activeTab, setActiveTab] = useState(NOTIFICATION_TABS[0]);
+  const [activeTab, setActiveTab] = useState(notifications.tabs[0]);
 
   useBodyScrollLock(notificationsOpen);
 
@@ -22,23 +24,20 @@ export function NotificationsDrawer() {
         onClick={closeNotifications}
         aria-hidden="true"
       />
-      <aside
-        className={cx('notif-drawer', notificationsOpen && 'is-open')}
-        aria-label="Notifications"
-      >
+      <aside className={cx('notif-drawer', notificationsOpen && 'is-open')} aria-label={copy.title}>
         <div className="nd-head">
           <div>
-            <h2 className="nd-title">Notifications</h2>
-            <p className="nd-sub tnum">3 unread · 7 total</p>
+            <h2 className="nd-title">{copy.title}</h2>
+            <p className="nd-sub tnum">{copy.subtitle}</p>
           </div>
           <div className="row" style={{ gap: '8px' }}>
-            <ToastButton className="btn" message="All notifications marked as read">
-              <Icon name="checks" /> Mark all read
+            <ToastButton className="btn" message={copy.markAllMessage}>
+              <Icon name={copy.markAllIcon} /> {copy.markAllLabel}
             </ToastButton>
             <button
               type="button"
               className="icon-sq"
-              aria-label="Close"
+              aria-label={copy.closeLabel}
               onClick={closeNotifications}
             >
               <Icon name="x" />
@@ -47,7 +46,7 @@ export function NotificationsDrawer() {
         </div>
 
         <div className="nd-tabs">
-          {NOTIFICATION_TABS.map((tab) => (
+          {notifications.tabs.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -60,7 +59,7 @@ export function NotificationsDrawer() {
         </div>
 
         <div className="nd-body">
-          {NOTIFICATION_GROUPS.map((group) => (
+          {notifications.groups.map((group) => (
             <div key={group.label} className="nd-group">
               <div className="nd-group-label">{group.label}</div>
               {group.items.map((item, index) => (

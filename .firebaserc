@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-adpa"
+    "default": "demo-adpa",
+    "prod": "adpa-governance-portal"
   }
 }

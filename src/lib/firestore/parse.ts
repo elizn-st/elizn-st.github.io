@@ -29,15 +29,32 @@ export interface FieldReader {
   optionalNumber(field: string, fallback: number): number;
   /** Required boolean. Accepts the strings "true"/"false". */
   boolean(field: string): boolean;
+  /** Optional boolean; `fallback` when absent or null. */
+  optionalBoolean(field: string, fallback: boolean): boolean;
   /** Required string constrained to a known set -- for union types. */
   oneOf<T extends string>(field: string, allowed: readonly T[]): T;
-  /** Required array, each element mapped through `item`. */
-  array<T>(field: string, item: (value: unknown, index: number) => T): readonly T[];
+  /**
+   * Required string from a known set that also permits the empty string, for
+   * the unions in this codebase that use '' as a variant (CycleDayState,
+   * ComparisonTone).
+   */
+  oneOfOrEmpty<T extends string>(field: string, allowed: readonly T[]): T | '';
+  /** Required array of strings. */
+  strings(field: string): readonly string[];
+  /** Required array of finite numbers. */
+  numbers(field: string): readonly number[];
+  /** Required array of objects, each mapped through a nested reader. */
+  objects<T>(field: string, parse: (item: FieldReader, index: number) => T): readonly T[];
+  /** Required nested object, mapped through a nested reader. */
+  object<T>(field: string, parse: (nested: FieldReader) => T): T;
   /** Raw access, for shapes the helpers above do not cover. */
   raw(field: string): unknown;
 }
 
 const isMissing = (value: unknown): boolean => value === undefined || value === null;
+
+const isRecord = (value: unknown): value is DocumentData =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function readFields(path: string, data: DocumentData): FieldReader {
   const fail = (field: string, detail: string): never => {
@@ -93,6 +110,11 @@ export function readFields(path: string, data: DocumentData): FieldReader {
       return fail(field, `should be a boolean but is ${describe(value)}`);
     },
 
+    optionalBoolean(field, fallback) {
+      if (isMissing(data[field])) return fallback;
+      return reader.boolean(field);
+    },
+
     oneOf<T extends string>(field: string, allowed: readonly T[]): T {
       const value = reader.string(field);
       if (!allowed.includes(value as T)) {
@@ -101,11 +123,54 @@ export function readFields(path: string, data: DocumentData): FieldReader {
       return value as T;
     },
 
-    array<T>(field: string, item: (value: unknown, index: number) => T): readonly T[] {
+    oneOfOrEmpty<T extends string>(field: string, allowed: readonly T[]): T | '' {
+      const value = data[field];
+      if (value === '' || isMissing(value)) return '';
+      return reader.oneOf(field, allowed);
+    },
+
+    strings(field) {
       const value = data[field];
       if (isMissing(value)) return fail(field, 'is missing');
       if (!Array.isArray(value)) return fail(field, `should be an array but is ${describe(value)}`);
-      return value.map(item);
+      return value.map((item, index) => {
+        if (typeof item !== 'string') {
+          return fail(field, `[${index}] should be a string but is ${describe(item)}`);
+        }
+        return item;
+      });
+    },
+
+    numbers(field) {
+      const value = data[field];
+      if (isMissing(value)) return fail(field, 'is missing');
+      if (!Array.isArray(value)) return fail(field, `should be an array but is ${describe(value)}`);
+      return value.map((item, index) => {
+        const numeric = typeof item === 'string' ? Number(item) : item;
+        if (typeof numeric !== 'number' || !Number.isFinite(numeric)) {
+          return fail(field, `[${index}] should be a number but is ${describe(item)}`);
+        }
+        return numeric;
+      });
+    },
+
+    objects<T>(field: string, parse: (item: FieldReader, index: number) => T): readonly T[] {
+      const value = data[field];
+      if (isMissing(value)) return fail(field, 'is missing');
+      if (!Array.isArray(value)) return fail(field, `should be an array but is ${describe(value)}`);
+      return value.map((item, index) => {
+        if (!isRecord(item)) {
+          return fail(field, `[${index}] should be an object but is ${describe(item)}`);
+        }
+        return parse(readFields(`${path}.${field}[${index}]`, item), index);
+      });
+    },
+
+    object<T>(field: string, parse: (nested: FieldReader) => T): T {
+      const value = data[field];
+      if (isMissing(value)) return fail(field, 'is missing');
+      if (!isRecord(value)) return fail(field, `should be an object but is ${describe(value)}`);
+      return parse(readFields(`${path}.${field}`, value));
     },
   };
 

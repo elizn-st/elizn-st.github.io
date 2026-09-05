@@ -15,6 +15,8 @@ npm run format        # prettier --write .
 npm run format:check  # prettier --check . (CI-friendly)
 npm run emulators     # Firebase Auth + Firestore emulators, state persisted
 npm run emulators:fresh   # same, but start from an empty dataset
+npm run seed          # load src/data/* into Firestore (add -- --prod for the real project)
+npm run grant -- <email>  # grant portalAccess (add --admin, --prod as needed)
 ```
 
 `src/styles/global.css` is in `.prettierignore`: it is the original stylesheet,
@@ -23,8 +25,19 @@ reformatting it would triple its length and bury real changes in noise.
 
 ## Firebase
 
-Local-only so far. Nothing imports `src/lib/firebase.ts` yet, so the Firebase
-SDK is tree-shaken out and the deployed bundle is unchanged.
+Auth is wired and every screen reads its content from Firestore. The modules in
+`src/data/` are no longer read by the app: they are the seed fixture and the home
+of the shared types, which is why the interfaces and unions still live there.
+
+`src/data/navigation.ts` deliberately stays in code -- `NAV_ITEMS` and
+`DASHBOARD_TABS` map onto route ids that must exist in the bundle, and
+`navHighlightFor` is a pure function, so making them editable would only let a
+Console edit break routing.
+
+`firebase/auth` costs about 105 kB raw (31 kB gzipped). `firebase/firestore` is
+another ~300 kB, which is why it is initialised in its own module
+(`src/lib/firestore/db.ts`) rather than alongside auth -- importing it is a
+decision, so a build that only authenticates does not carry the query engine.
 
 ### Running it
 
@@ -75,15 +88,139 @@ values belong in `.env.production` (gitignored) or the build environment.
 `demo-`, so no flag has to be remembered. `VITE_FIREBASE_EMULATORS=true` forces
 the same routing for a real project id.
 
+### Authentication
+
+`AuthProvider` (`src/state/AuthContext.tsx`) exposes three states -- `loading`,
+`signed-out`, `signed-in` -- and `AuthGate` maps them to a splash, the login
+screen and the app. The `loading` state is not optional: Firebase resolves
+persistence asynchronously, so a two-state gate renders the login screen for a
+frame on every refresh, even for a signed-in user.
+
+Everything provider-specific lives behind the `AuthBackend` interface
+(`src/auth/types.ts`), whose `subscribe` mirrors `onAuthStateChanged`. The
+Firebase implementation is `src/auth/firebaseBackend.ts`; `AuthProvider` takes a
+`backend` prop, so a test can substitute one without touching the UI.
+
+Two behaviours are deliberate:
+
+- **Credential failures collapse to a single message.** `auth/wrong-password`,
+  `auth/user-not-found` and `auth/invalid-credential` all render "Those
+  credentials do not match an account." Distinguishing them is exactly what
+  Firebase's email-enumeration protection exists to prevent. Unmapped codes log
+  the provider's detail to the console and show a generic message, so a raw
+  `Firebase: Error (auth/...)` string never reaches a user.
+- **`displayName` falls back to the email's local part.** Firebase leaves it
+  null for email/password accounts, so `aisha.alkhayyat@eand.com` renders as
+  "Aisha Alkhayyat" until a profile document supplies a real name.
+
+To sign in locally, create a user in the Emulator UI at
+`http://127.0.0.1:4000/auth`, or from a shell:
+
+```bash
+curl -X POST "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-api-key" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@eand.com","password":"emulator-only","returnSecureToken":true}'
+```
+
+Emulator accounts are wiped unless `.emulator-data/` is preserved, which
+`npm run emulators` does on a graceful shutdown.
+
+Sign-out is wired to the button that already existed on the Profile screen; its
+markup is unchanged.
+
+### A production build fails without real config
+
+`.env.development` is loaded only in development mode, and `src/lib/firebase.ts`
+now sits in the app's module graph -- it throws on a missing project id before
+React mounts, which is a blank page rather than a degraded one. `vite.config.ts`
+therefore refuses to complete a production build unless the full web config is
+present, and rejects a `demo-` project id outright, since that resolves to
+emulators the visitor's machine will not be running.
+
+That failure is intentional: it lands in CI rather than in front of users. Until
+a real project exists, `npm run build` and the Pages workflow will fail, and the
+last good deploy keeps serving. `loadEnv` merges `process.env`, so CI can supply
+the values as GitHub repo variables instead of a committed file.
+
 ### Reading data
 
 Reads go through `useFirestoreCollection` / `useFirestoreDoc`
 (`src/hooks/useFirestore.ts`), which are `onSnapshot` listeners rather than
 one-shot fetches. That is deliberate: a document edited in the Firebase Console
 reaches every running app within about a second, with no reload and no refetch
-call. `src/repositories/recommendations.ts` is the reference implementation --
-it maps documents onto the existing `QueueRow` type from `src/data/queue.ts`, so
-screens keep the type they already use.
+call.
+
+`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- two
+collections, seventeen shared documents and the signed-in user's own -- and
+gates the app on the first snapshot, so `usePortalData()` returns plain loaded
+values and screens stay synchronous. The alternative -- a request and a skeleton
+per screen -- would mean a loading state per screen for a few kilobytes and
+would change what every screen renders; this way their markup is identical to
+the version that imported the static modules.
+
+### What is data, and what is not
+
+Everything a reader sees is data: headings, chips, button labels, scorecard
+figures, table headers, chart titles and legends, pager labels, placeholders,
+even the breadcrumb labels and the empty-search hint. `src/data/` is now the
+seed fixture and the type definitions -- one definition of each shape, with the
+values living in Firestore -- and no screen imports a value from it. The only
+two things it still exports to the app are pure functions: `filterSearchIndex`
+and `navHighlightFor`.
+
+What stays in code is the frame the copy is poured into:
+
+- **Layout and geometry** -- CSS class names, SVG padding, chart heights,
+  column widths, content column widths. A customer editing an axis inset can
+  only break the chart.
+- **Animation timings** -- stagger, delay and transition constants.
+- **Identifiers** -- route ids, dashboard tab ids, chart keys. These name things
+  that must exist in the bundle, so the parsers validate every id the Console
+  can supply against the build's own lists (`ROUTE_IDS`, `DASHBOARD_TAB_IDS`,
+  `CHART_DETAIL_KEYS`) and a typo fails with a named field instead of a dead
+  link.
+- **Derivation** -- the formatters and row builders in
+  `chartDetail/definitions.tsx`, which compute a table from the series rather
+  than storing figures twice.
+- **The screens that render when Firestore is unavailable** -- the login screen,
+  the splash, "Access pending" (reads denied) and "Content unavailable" (reads
+  failed). Their copy cannot come from the database they exist to report on.
+
+Chart axis bounds _are_ data (`analytics/series.chartConfig`): they decide what
+a chart claims about its numbers, so a category added in the Console can be
+given the headroom it needs without a rebuild.
+
+### Who is signed in
+
+Identity comes from the two places that know, and is assembled in
+`DataContext`:
+
+- **Firebase Auth** owns the account -- uid, email and display name. The seed
+  sets `displayName`, because Firebase leaves it null for email/password
+  accounts. The SDK restores the profile it cached in browser storage, so
+  `firebaseBackend` refreshes it once per account on subscribe; otherwise a name
+  changed by an administrator never reaches a session that is already signed in.
+- **`users/{uid}`** owns what Auth has no field for: initials, job title,
+  department, focus, employee id, location. `firestore.rules` already scopes
+  that document to its owner.
+
+The role line and headline are composed from those, so no screen knows the
+format. The document is optional: a newly provisioned account has none, and
+those fields render blank rather than blocking the portal or borrowing another
+person's details. `initials` is stored rather than derived because
+"Aisha Al-Khayyat" yields "AA" by any simple rule and the avatar reads "AK".
+
+Parsers live in `src/repositories/`, and every shape is the interface already
+declared in `src/data/`, so screens keep the types they compiled against before.
+
+Two things are stored that the mocks did not need. Documents in
+`recommendations` and `decisions` carry an `order` field, because Firestore has
+no inherent document order and those lists are authored rather than alphabetical
+-- the app sorts on it client-side rather than with `orderBy`, so a Console edit
+that dropped the field is reported as malformed instead of being silently
+excluded from the query. And `chartDetail/definitions.tsx` became a factory over
+the series document, because its numbers are data while its copy, formatters and
+chart construction are code.
 
 Because those documents are hand-edited by people, every field is read through a
 validating reader (`src/lib/firestore/parse.ts`). Two consequences worth knowing:
@@ -134,6 +271,11 @@ Two things to keep straight once that is set up:
 
 ### Notes
 
+- **Reading requires a `portalAccess` claim, not just a session.** This
+  repository is public and the web config ships in the bundle, so with
+  email/password sign-up open, "signed in" is available to anyone. A
+  self-registered account gets the "Access pending" screen until
+  `npm run grant` provisions it.
 - **Rules default to deny.** `firestore.rules` opts each collection in
   explicitly, so a collection added during the mock migration is unreadable
   until a rule exists for it — a loud development error rather than data

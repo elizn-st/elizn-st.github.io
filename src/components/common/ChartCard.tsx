@@ -41,7 +41,9 @@ export function ChartCard({ head, legend, xAxisLabels, className, children }: Ch
           ))}
         </div>
       )}
-      {legend && <Legend items={legend} hidden={hidden} onToggle={toggle} />}
+      {/* An empty array counts as absent: a chart without a legend now says
+          so with an empty list in its copy document. */}
+      {legend && legend.length > 0 && <Legend items={legend} hidden={hidden} onToggle={toggle} />}
     </div>
   );
 }

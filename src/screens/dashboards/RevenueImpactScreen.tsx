@@ -1,73 +1,51 @@
-import { IMPACT_SERIES, WEEK_LABELS } from '@/data/series';
-import { KpiCard } from '@/components/common/KpiCard';
+import { KpiCards } from '@/components/common/KpiCard';
+import { usePortalData } from '@/state/DataContext';
 import { ChartCard } from '@/components/common/ChartCard';
 import { ChartHead } from '@/components/common/ChartHead';
 import { LineChart } from '@/components/charts/LineChart';
 import { DashboardShell, dashboardMeta } from './DashboardShell';
 
-export const revenueImpactMeta = dashboardMeta('Revenue impact');
+export const revenueImpactMeta = dashboardMeta('c4');
 
 const asThousands = (value: number) => `AED ${Math.round(value)}K`;
 
+/** Which of the two series is filled; the names and colours are copy. */
+const FILLED = [true, false];
+
 export function RevenueImpactScreen() {
+  const { series, boards } = usePortalData();
+  const board = boards.copy.boards.c4;
+  const chartData = [series.impactSeries.withAdpa, series.impactSeries.baseline];
+
   return (
-    <DashboardShell
-      tab="c4"
-      title="Revenue impact"
-      subtitle="Cumulative AED uplift vs the no-ADPA baseline"
-    >
+    <DashboardShell tab="c4">
       <div className="kpi-row">
-        <KpiCard
-          index={0}
-          label="Revenue uplift"
-          value="+AED 612K"
-          delta="+8.4%"
-          direction="up"
-          tone="pos"
-        />
-        <KpiCard
-          index={1}
-          label="Markdown cost"
-          value="-AED 84K"
-          delta="planned"
-          direction="down"
-          tone="neg"
-        />
-        <KpiCard index={2} label="Incremental units" value="1,240" delta="+310" direction="up" />
-        <KpiCard
-          index={3}
-          label="Margin delta"
-          value="+2.1%"
-          delta="+0.3pp"
-          direction="up"
-          tone="pos"
-        />
+        <KpiCards kpis={board.kpis} />
       </div>
 
       <ChartCard
         head={
           <ChartHead
-            title="Cumulative effect since cycle start: with ADPA vs baseline"
-            subtitle="With ADPA the cycle closed AED 612K ahead of the counterfactual baseline"
+            title={board.chart.copy.title}
+            subtitle={board.chart.copy.subtitle}
             padLeft={48}
             chartKey="c4-impact"
           />
         }
-        xAxisLabels={WEEK_LABELS}
-        legend={[
-          { label: 'With ADPA', color: 'var(--dv1)' },
-          { label: 'Baseline without ADPA', color: 'var(--n40)' },
-        ]}
+        xAxisLabels={series.weekLabels}
+        legend={board.chart.legend}
       >
         {(hidden) => (
           <LineChart
-            labels={WEEK_LABELS}
+            labels={series.weekLabels}
             format={asThousands}
             hiddenSeries={hidden}
-            series={[
-              { name: 'With ADPA', color: 'var(--dv1)', area: true, data: IMPACT_SERIES.withAdpa },
-              { name: 'Baseline', color: 'var(--n40)', data: IMPACT_SERIES.baseline },
-            ]}
+            series={board.chart.seriesNames.map((name, index) => ({
+              name,
+              color: board.chart.legend[index]?.color ?? '',
+              area: FILLED[index] ?? false,
+              data: chartData[index] ?? [],
+            }))}
           />
         )}
       </ChartCard>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cx } from '@/lib/cx';
 import { useRouter } from '@/routing/RouterContext';
 import { useOverlays } from '@/state/OverlayContext';
+import { usePortalData } from '@/state/DataContext';
 import { useInterval } from '@/hooks/useInterval';
 import { Icon } from '@/components/common/Icon';
 import { Breadcrumb } from './Breadcrumb';
@@ -19,6 +20,8 @@ const BELL_PULSE_INTERVAL_MS = 12_000;
 export function Topbar({ section, page, navOpen, onToggleNav }: TopbarProps) {
   const { navigate, back } = useRouter();
   const { openSearch, openNotifications } = useOverlays();
+  const { navigation } = usePortalData();
+  const copy = navigation.copy;
   /** Bumping the key remounts the dot, which restarts its CSS animation. */
   const [pulseKey, setPulseKey] = useState(0);
 
@@ -29,33 +32,37 @@ export function Topbar({ section, page, navOpen, onToggleNav }: TopbarProps) {
       <div className="topbar-left">
         <button
           className="hamburger"
-          aria-label="Open menu"
+          aria-label={copy.openMenuLabel}
           aria-expanded={navOpen}
           onClick={onToggleNav}
         >
           <Icon name="list" />
         </button>
         <a className="logo" href="#/home">
-          <span className="logo-mark">e&amp;</span>
-          <span className="logo-word">ADPA</span>
+          <span className="logo-mark">{copy.logoMark}</span>
+          <span className="logo-word">{copy.logoWord}</span>
         </a>
         <div className="crumb-wrap">
-          <button className="back-btn" aria-label="Go back" onClick={back}>
+          <button className="back-btn" aria-label={copy.backLabel} onClick={back}>
             <Icon name="arrow-left" />
           </button>
           <Breadcrumb section={section} page={page} />
         </div>
       </div>
       <div className="topbar-right">
-        <button className="featured-icon" aria-label="Search" onClick={openSearch}>
+        <button className="featured-icon" aria-label={copy.searchLabel} onClick={openSearch}>
           <Icon name="magnifying-glass" />
         </button>
-        <button className="featured-icon" aria-label="AI analyst" onClick={() => navigate('chat')}>
+        <button
+          className="featured-icon"
+          aria-label={copy.analystLabel}
+          onClick={() => navigate('chat')}
+        >
           <Icon name="chats" />
         </button>
         <button
           className="featured-icon"
-          aria-label="Notifications"
+          aria-label={copy.notificationsLabel}
           onClick={() => {
             setPulseKey((key) => key + 1);
             openNotifications();

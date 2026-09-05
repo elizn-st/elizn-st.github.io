@@ -89,3 +89,21 @@ export const NOTIFICATION_GROUPS: readonly NotificationGroup[] = [
 ];
 
 export const NOTIFICATION_TABS: readonly string[] = ['All', 'Critical', 'Warnings', 'Updates'];
+
+export interface NotificationsCopy {
+  readonly title: string;
+  readonly subtitle: string;
+  readonly markAllLabel: string;
+  readonly markAllIcon: string;
+  readonly markAllMessage: string;
+  readonly closeLabel: string;
+}
+
+export const NOTIFICATIONS_COPY: NotificationsCopy = {
+  title: 'Notifications',
+  subtitle: '3 unread · 7 total',
+  markAllLabel: 'Mark all read',
+  markAllIcon: 'checks',
+  markAllMessage: 'All notifications marked as read',
+  closeLabel: 'Close',
+};

@@ -1,3 +1,5 @@
+import type { PaginationSpec } from './ui';
+
 /**
  * Runtime list as well as a type: validating a Console-edited document needs
  * the allowed values at runtime, and deriving the union from the array keeps
@@ -79,3 +81,39 @@ export const QUEUE_ROWS: readonly QueueRow[] = [
     status: 'flagged',
   },
 ];
+
+export interface QueueCopy {
+  readonly title: string;
+  readonly chip: string;
+  readonly exportLabel: string;
+  readonly exportMessage: string;
+  readonly approveLabel: string;
+  readonly rejectLabel: string;
+  /** Shown when a bulk action runs with nothing selected. */
+  readonly emptySelectionMessage: string;
+  readonly searchPlaceholder: string;
+  readonly searchAriaLabel: string;
+  readonly selectAllLabel: string;
+  readonly appliedFilters: readonly string[];
+  readonly resultsCount: string;
+  /** Header labels, in column order. The checkbox column has no header. */
+  readonly columns: readonly string[];
+  readonly pagination: PaginationSpec;
+}
+
+export const QUEUE_COPY: QueueCopy = {
+  title: 'Recommendations',
+  chip: 'Cycle Aug 05–11',
+  exportLabel: 'Export',
+  exportMessage: 'Export started',
+  approveLabel: 'Approve selected',
+  rejectLabel: 'Reject selected',
+  emptySelectionMessage: 'Select at least one row first',
+  searchPlaceholder: 'Search by SKU, brand or factor',
+  searchAriaLabel: 'Search',
+  selectAllLabel: 'Select all',
+  appliedFilters: ['Category: Electronics', 'Status: Pending', 'Delta: Negative'],
+  resultsCount: '6 of 128 results',
+  columns: ['SKU', 'Current', 'Recommended', 'Δ%', 'Top factor', 'Status'],
+  pagination: { pages: [1, 2, 3, 4, 5, 'dots', 17], active: 3 },
+};

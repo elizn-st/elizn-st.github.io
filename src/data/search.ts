@@ -103,15 +103,47 @@ export const SEARCH_INDEX: readonly SearchGroup[] = [
   },
 ];
 
-/** Case-insensitive filter over label and meta, dropping groups that end up empty. */
-export const filterSearchIndex = (query: string): readonly SearchGroup[] => {
+/**
+ * Case-insensitive filter over label and meta, dropping groups that end up
+ * empty. Takes the index as an argument rather than closing over
+ * SEARCH_INDEX, so the same pure function serves the Firestore-backed index.
+ */
+export const filterSearchIndex = (
+  groups: readonly SearchGroup[],
+  query: string,
+): readonly SearchGroup[] => {
   const needle = query.trim().toLowerCase();
-  if (!needle) return SEARCH_INDEX;
-  return SEARCH_INDEX.map((group) => ({
-    label: group.label,
-    entries: group.entries.filter(
-      (entry) =>
-        entry.label.toLowerCase().includes(needle) || entry.meta.toLowerCase().includes(needle),
-    ),
-  })).filter((group) => group.entries.length > 0);
+  if (!needle) return groups;
+  return groups
+    .map((group) => ({
+      label: group.label,
+      entries: group.entries.filter(
+        (entry) =>
+          entry.label.toLowerCase().includes(needle) || entry.meta.toLowerCase().includes(needle),
+      ),
+    }))
+    .filter((group) => group.entries.length > 0);
+};
+
+export interface SearchCopy {
+  readonly placeholder: string;
+  readonly ariaLabel: string;
+  readonly escKey: string;
+  /** Wraps the query in the empty state: `${emptyPrefix}“query”`. */
+  readonly emptyPrefix: string;
+  readonly emptyHint: string;
+  readonly navigateHint: string;
+  readonly openHint: string;
+  readonly indexedLabel: string;
+}
+
+export const SEARCH_COPY: SearchCopy = {
+  placeholder: 'Search SKUs, dashboards or actions',
+  ariaLabel: 'Search',
+  escKey: 'Esc',
+  emptyPrefix: 'Nothing matches ',
+  emptyHint: 'Try a SKU code, a category or a dashboard name',
+  navigateHint: 'navigate',
+  openHint: 'open',
+  indexedLabel: 'Indexed 2,500 SKUs',
 };

@@ -1,4 +1,5 @@
 import { cx } from '@/lib/cx';
+import { usePortalData } from '@/state/DataContext';
 import { Icon } from './Icon';
 
 export interface LegendItem {
@@ -17,9 +18,10 @@ export interface LegendProps {
 const legendSeries = (item: LegendItem, index: number): number => item.series ?? index;
 
 export function Legend({ items, hidden, onToggle }: LegendProps) {
+  const { chrome } = usePortalData();
   return (
     <div className="chart-legend">
-      <span className="legend-lead">Show:</span>
+      <span className="legend-lead">{chrome.copy.legendLead}</span>
       {items.map((item, index) => {
         const series = legendSeries(item, index);
         return (

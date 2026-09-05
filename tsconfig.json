@@ -15,7 +15,9 @@
     "exactOptionalPropertyTypes": false,
     "verbatimModuleSyntax": true,
 
-    "allowImportingTsExtensions": false,
+    // Node runs scripts/*.ts directly, and its ESM resolver needs the
+    // explicit .ts extension on relative imports.
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -23,5 +25,5 @@
 
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "scripts", "vite.config.ts"]
 }

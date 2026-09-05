@@ -1,5 +1,6 @@
 import { useRouter } from '@/routing/RouterContext';
 import { useChartFocus } from '@/state/ChartFocusContext';
+import { usePortalData } from '@/state/DataContext';
 import type { ChartDetailKey } from '@/screens/chartDetail/keys';
 import { Icon } from './Icon';
 
@@ -10,6 +11,7 @@ export interface ChartHeadProps {
   readonly padLeft?: number;
   /** When set, the expand button opens the matching full chart page. */
   readonly chartKey?: ChartDetailKey;
+  /** Defaults to the shared label in `content/chrome`. */
   readonly expandLabel?: string;
   /** Overrides the expand action, e.g. the detail screen's history link. */
   readonly onExpand?: () => void;
@@ -20,11 +22,12 @@ export function ChartHead({
   subtitle,
   padLeft,
   chartKey,
-  expandLabel = 'Open full view',
+  expandLabel,
   onExpand,
 }: ChartHeadProps) {
   const { navigate } = useRouter();
   const { focusChart } = useChartFocus();
+  const { chrome } = usePortalData();
 
   const handleExpand = () => {
     if (onExpand) {
@@ -42,7 +45,12 @@ export function ChartHead({
         <h2 className="sec-title">{title}</h2>
         {subtitle && <p className="sec-sub">{subtitle}</p>}
       </div>
-      <button type="button" className="expand-btn" aria-label={expandLabel} onClick={handleExpand}>
+      <button
+        type="button"
+        className="expand-btn"
+        aria-label={expandLabel ?? chrome.copy.expandLabel}
+        onClick={handleExpand}
+      >
         <Icon name="arrow-square-out" />
       </button>
     </div>

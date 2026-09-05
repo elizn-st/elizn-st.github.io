@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { usePortalData } from '@/state/DataContext';
 import type { CSSProperties } from 'react';
 import { cx } from '@/lib/cx';
-import { CYCLE_FILTER_OPTIONS, FILTER_GROUPS } from '@/data/filters';
 import { useOverlays } from '@/state/OverlayContext';
 import { useToast } from '@/state/ToastContext';
 import { Icon } from '@/components/common/Icon';
@@ -43,14 +43,16 @@ const place = (anchor: DOMRect, measuredHeight: number): Placement => {
 const checkboxId = (group: string, option: string) => `fp-${group}-${option}`;
 
 export function FilterPopover() {
+  const { filters } = usePortalData();
   const { filterAnchor, closeFilters } = useOverlays();
+  const copy = filters.copy;
   const toast = useToast();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [placement, setPlacement] = useState<Placement | null>(null);
   const [checked, setChecked] = useState<ReadonlySet<string>>(
     () =>
       new Set(
-        FILTER_GROUPS.flatMap((group) =>
+        filters.groups.flatMap((group) =>
           group.options
             .filter((option) => option.checked)
             .map((option) => checkboxId(group.label, option.label)),
@@ -96,14 +98,19 @@ export function FilterPopover() {
         style={placement?.style}
       >
         <div className="fp-head">
-          <span className="fp-title">Filters</span>
-          <button type="button" className="icon-sq sm" aria-label="Close" onClick={closeFilters}>
+          <span className="fp-title">{copy.title}</span>
+          <button
+            type="button"
+            className="icon-sq sm"
+            aria-label={copy.closeLabel}
+            onClick={closeFilters}
+          >
             <Icon name="x" />
           </button>
         </div>
 
         <div className="fp-body">
-          {FILTER_GROUPS.map((group) => (
+          {filters.groups.map((group) => (
             <div key={group.label} className="fp-group">
               <div className="fp-label">{group.label}</div>
               {group.options.map((option) => {
@@ -124,24 +131,24 @@ export function FilterPopover() {
           ))}
 
           <div className="fp-group">
-            <div className="fp-label">Deviation from recommendation</div>
+            <div className="fp-label">{copy.deviationLabel}</div>
             <div className="fp-range">
               <Slider
-                name="Minimum Δ%"
-                min={-20}
-                max={20}
-                step={0.5}
-                defaultValue={-8}
-                ariaLabel="Minimum deviation"
+                name={copy.sliderName}
+                min={copy.sliderMin}
+                max={copy.sliderMax}
+                step={copy.sliderStep}
+                defaultValue={copy.sliderValue}
+                ariaLabel={copy.sliderAriaLabel}
               />
             </div>
           </div>
 
           <div className="fp-group">
-            <div className="fp-label">Cycle</div>
+            <div className="fp-label">{copy.cycleLabel}</div>
             <Segmented
-              options={CYCLE_FILTER_OPTIONS}
-              defaultValue="Current"
+              options={filters.cycleOptions}
+              defaultValue={copy.defaultCycle}
               style={{ width: '100%' }}
               stretch
             />
@@ -154,20 +161,20 @@ export function FilterPopover() {
             className="btn"
             onClick={() => {
               setChecked(new Set());
-              toast('Filters reset');
+              toast(copy.resetMessage);
             }}
           >
-            Reset
+            {copy.resetLabel}
           </button>
           <button
             type="button"
             className="btn btn-primary grow"
             onClick={() => {
               closeFilters();
-              toast('Filters applied');
+              toast(copy.applyMessage);
             }}
           >
-            Apply filters
+            {copy.applyLabel}
           </button>
         </div>
       </div>

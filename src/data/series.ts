@@ -66,3 +66,40 @@ export const ELASTICITY_BARS: readonly ElasticityBar[] = [
   { label: 'Occasional', value: 3.8, display: '+3.8%', color: 'var(--dv-vi)' },
   { label: 'New customers', value: 2.1, display: '+2.1%', color: '#EDA12F' },
 ];
+
+/**
+ * Fixed axis bounds and the retailer identities the grouped bars use.
+ *
+ * These are bounds, not layout: they decide what the chart claims about the
+ * data, so a category added in the Console can be given the headroom it needs
+ * without a rebuild. SVG padding and heights stay in the components.
+ */
+export interface Retailer {
+  readonly name: string;
+  readonly color: string;
+}
+
+export interface ChartConfig {
+  readonly maxDecisions: number;
+  readonly minRevenue: number;
+  readonly maxRevenue: number;
+  readonly maxCategoryPrice: number;
+  readonly retailers: readonly Retailer[];
+  /** The KPI sparkline's two shapes, rising and falling. */
+  readonly sparklineUp: readonly number[];
+  readonly sparklineDown: readonly number[];
+}
+
+export const CHART_CONFIG: ChartConfig = {
+  maxDecisions: 140,
+  minRevenue: 410,
+  maxRevenue: 500,
+  maxCategoryPrice: 3000,
+  retailers: [
+    { name: 'e&', color: '#950124' },
+    { name: 'Competitor A', color: '#EA6C29' },
+    { name: 'Competitor B', color: '#0D9488' },
+  ],
+  sparklineUp: [14, 17, 15, 20, 18, 23, 21, 26, 24, 29, 27, 33],
+  sparklineDown: [30, 26, 28, 23, 25, 20, 22, 17, 19, 15, 17, 12],
+};

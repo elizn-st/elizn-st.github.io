@@ -1,9 +1,8 @@
 rules_version = '2';
 
 // The default posture here is deny. Every collection opts in explicitly below,
-// so a collection introduced during the mock migration stays unreadable until
-// someone writes a rule for it. That way the failure mode is a loud permission
-// error in development rather than data quietly readable in production.
+// so a collection introduced later stays unreadable until someone writes a rule
+// for it -- a loud development error rather than data quietly readable.
 //
 // Two things bypass these rules entirely, which is why the client-write rules
 // can stay closed without blocking anyone who legitimately needs to edit:
@@ -11,11 +10,11 @@ rules_version = '2';
 //   * the Firebase Console, which acts with project IAM privileges -- so a
 //     customer granted Console access edits documents directly, and every
 //     app instance sees it live through onSnapshot; and
-//   * the Admin SDK, used by the seed script and any pipeline writes.
+//   * the Admin SDK, used by scripts/seed.ts and any pipeline writes.
 //
 // Rules govern the client SDK only: the web app, and anyone who lifts the
 // (public, non-secret) web config out of the bundle and queries the database
-// themselves. Assume the latter will happen.
+// themselves. Assume the latter will happen -- this repository is public.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,53 +23,65 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
+    // Being signed in is NOT enough to read anything.
+    //
+    // The web config ships in a public bundle and email/password sign-up is
+    // open by default, so "signed in" is available to anyone who wants it.
+    // Reading pricing data additionally requires a `portalAccess` custom
+    // claim, granted out of band by scripts/grant-access.ts. That matches how
+    // the portal actually works -- the login screen says access is provisioned
+    // by an administrator -- and it means a self-registered account sees
+    // nothing.
+    function hasPortalAccess() {
+      return signedIn() && request.auth.token.portalAccess == true;
     }
 
-    // Set with the Admin SDK as a custom claim, never from a document: reading
-    // a role out of Firestore would mean a get() inside every rule evaluation,
-    // billed as a document read on every access. No user carries this claim
-    // yet, so today it denies exactly like `if false` -- it is here so an
-    // in-app editing screen becomes a claim grant rather than a rules rewrite.
+    // Set as a custom claim, never read from a document: a role document would
+    // mean a get() inside every rule evaluation, billed as a read on every
+    // access.
     function isAdmin() {
       return signedIn() && request.auth.token.admin == true;
     }
 
-    // ---- org-wide read-only data --------------------------------------------
-    // Pricing recommendations (src/data/queue.ts), the decision audit trail
-    // (history.ts), the analytics series behind the dashboards (series.ts,
-    // dashboards.ts) and lookup lists (filters.ts, navigation.ts).
+    // ---- org-wide data -------------------------------------------------------
+    // `recommendations` and `decisions` are one document per row, so they can
+    // be queried and edited individually. `analytics`, `content` and `config`
+    // hold documents that are always read whole -- one per chart series or per
+    // screen's copy -- because Firestore bills per document read.
     //
     // Approving or rejecting a recommendation is a decision, not an edit: it
     // belongs in `decisions` as a new document, so `recommendations` itself
     // takes no client writes.
 
     match /recommendations/{recommendationId} {
-      allow read: if signedIn();
+      allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }
 
     match /decisions/{decisionId} {
-      allow read: if signedIn();
+      allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }
 
     match /analytics/{documentId} {
-      allow read: if signedIn();
+      allow read: if hasPortalAccess();
+      allow write: if isAdmin();
+    }
+
+    match /content/{documentId} {
+      allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }
 
     match /config/{documentId} {
-      allow read: if signedIn();
+      allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }
 
     // ---- per-user state ------------------------------------------------------
-    // Notification read state (notifications.ts `unread`) and chat threads
-    // (chat.ts) are one user's data, so they are keyed by uid and readable
-    // only by that user. The recursive wildcard covers subcollections added
-    // later without needing a rule per subcollection.
+    // A user's own subtree needs only ownership, not portal access: it holds
+    // their notification read state and chat threads, which are theirs whether
+    // or not they have been provisioned.
 
     match /users/{uid} {
       allow read, write: if isOwner(uid);
@@ -78,6 +89,10 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if isOwner(uid);
       }
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
     }
   }
 }

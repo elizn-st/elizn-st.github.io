@@ -1,19 +1,25 @@
+import { usePortalData } from '@/state/DataContext';
 import { GoButton } from '@/components/common/GoButton';
-import type { ScreenMeta } from '@/routing/screens';
+import { breadcrumb } from '@/routing/screens';
+import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
 
-export const rulesMeta: ScreenMeta = { section: null, page: 'Rules', width: 892 };
+export const rulesMeta = ({ navigation }: ScreenMetaInput): ScreenMeta => ({
+  ...breadcrumb(navigation, 'rules'),
+  width: 892,
+});
 
 export function RulesScreen() {
+  const { rules } = usePortalData();
   return (
     <div className="card pad" style={{ textAlign: 'center', padding: 'var(--s48)' }}>
       <h1 className="page-title" style={{ marginBottom: 'var(--s8)' }}>
-        Pricing rules
+        {rules.copy.title}
       </h1>
       <p className="page-sub" style={{ maxWidth: '440px', margin: '0 auto var(--s16)' }}>
-        Guardrails, floors and ceilings live here. The Finance role has read-only access this cycle.
+        {rules.copy.body}
       </p>
       <GoButton to="home" className="btn">
-        Back to home
+        {rules.copy.backLabel}
       </GoButton>
     </div>
   );

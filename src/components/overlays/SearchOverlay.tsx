@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cx } from '@/lib/cx';
 import { filterSearchIndex, type SearchEntry } from '@/data/search';
+import { usePortalData } from '@/state/DataContext';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useOverlays } from '@/state/OverlayContext';
 import { useRouter } from '@/routing/RouterContext';
@@ -9,6 +10,8 @@ import { Icon } from '@/components/common/Icon';
 const FOCUS_DELAY_MS = 40;
 
 export function SearchOverlay() {
+  const { search } = usePortalData();
+  const copy = search.copy;
   const { searchOpen, closeSearch } = useOverlays();
   const { navigate } = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -16,7 +19,7 @@ export function SearchOverlay() {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const groups = useMemo(() => filterSearchIndex(query), [query]);
+  const groups = useMemo(() => filterSearchIndex(search.groups, query), [search.groups, query]);
   const flat = useMemo<readonly SearchEntry[]>(
     () => groups.flatMap((group) => group.entries),
     [groups],
@@ -76,27 +79,29 @@ export function SearchOverlay() {
         if (event.target === event.currentTarget) closeSearch();
       }}
     >
-      <div className="sr-panel" role="dialog" aria-label="Search">
+      <div className="sr-panel" role="dialog" aria-label={copy.ariaLabel}>
         <div className="sr-field">
           <Icon name="magnifying-glass" />
           <input
             ref={inputRef}
             type="search"
-            placeholder="Search SKUs, dashboards or actions"
-            aria-label="Search"
+            placeholder={copy.placeholder}
+            aria-label={copy.ariaLabel}
             autoComplete="off"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <kbd className="sr-kbd">Esc</kbd>
+          <kbd className="sr-kbd">{copy.escKey}</kbd>
         </div>
 
         <div className="sr-results" ref={resultsRef}>
           {groups.length === 0 ? (
             <div className="sr-empty">
               <Icon name="magnifying-glass" />
-              <p>Nothing matches “{query}”</p>
-              <span>Try a SKU code, a category or a dashboard name</span>
+              <p>
+                {copy.emptyPrefix}“{query}”
+              </p>
+              <span>{copy.emptyHint}</span>
             </div>
           ) : (
             groups.map((group) => (
@@ -133,13 +138,13 @@ export function SearchOverlay() {
         <div className="sr-foot">
           <span>
             <kbd className="sr-kbd">↑</kbd>
-            <kbd className="sr-kbd">↓</kbd> navigate
+            <kbd className="sr-kbd">↓</kbd> {copy.navigateHint}
           </span>
           <span>
-            <kbd className="sr-kbd">↵</kbd> open
+            <kbd className="sr-kbd">↵</kbd> {copy.openHint}
           </span>
           <span className="grow" />
-          <span className="tnum">Indexed 2,500 SKUs</span>
+          <span className="tnum">{copy.indexedLabel}</span>
         </div>
       </div>
     </div>

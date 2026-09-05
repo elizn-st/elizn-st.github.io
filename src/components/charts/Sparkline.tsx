@@ -1,14 +1,14 @@
+import { usePortalData } from '@/state/DataContext';
 import type { Tone } from '@/lib/format';
-
-const UP = [14, 17, 15, 20, 18, 23, 21, 26, 24, 29, 27, 33];
-const DOWN = [30, 26, 28, 23, 25, 20, 22, 17, 19, 15, 17, 12];
 
 const WIDTH = 220;
 const HEIGHT = 40;
 
 /** The tiny area chart tucked inside a KPI scorecard. */
 export function Sparkline({ direction }: { readonly direction: Tone }) {
-  const values = direction === 'down' ? DOWN : UP;
+  const { series } = usePortalData();
+  const { sparklineUp, sparklineDown } = series.chartConfig;
+  const values = direction === 'down' ? sparklineDown : sparklineUp;
   const color = direction === 'down' ? 'var(--bad)' : 'var(--ok40)';
 
   const min = Math.min(...values);

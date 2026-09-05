@@ -1,5 +1,5 @@
 import { cx } from '@/lib/cx';
-import { NAV_ITEMS } from '@/data/navigation';
+import { usePortalData } from '@/state/DataContext';
 import type { RouteId } from '@/routing/routeIds';
 import { Icon } from '@/components/common/Icon';
 import { GoButton } from '@/components/common/GoButton';
@@ -13,10 +13,13 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ activeNav, onCollapseToggle, onNavigate }: SidebarProps) {
+  const { navigation, identity } = usePortalData();
+  const copy = navigation.copy;
+
   return (
     <aside className="sidebar">
       <div className="nav-group">
-        {NAV_ITEMS.map((item) => (
+        {copy.navItems.map((item) => (
           <GoButton
             key={item.id}
             to={item.id}
@@ -40,14 +43,14 @@ export function Sidebar({ activeNav, onCollapseToggle, onNavigate }: SidebarProp
         <span className="nav-icon">
           <Icon name="sidebar-simple" />
         </span>
-        <span className="nav-label collapse-label">Collapse panel</span>
+        <span className="nav-label collapse-label">{copy.collapseLabel}</span>
       </button>
       <div className="nav-divider" />
       <GoButton to="profile" className="profile-card" onNavigate={onNavigate}>
-        <span className="avatar">AK</span>
+        <span className="avatar">{identity.initials}</span>
         <span className="profile-info">
-          <span className="profile-name">Aisha</span>
-          <span className="profile-role">Finance · Senior Analyst</span>
+          <span className="profile-name">{identity.firstName}</span>
+          <span className="profile-role">{identity.roleLine}</span>
         </span>
       </GoButton>
     </aside>

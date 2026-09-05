@@ -40,3 +40,39 @@ export const FILTER_GROUPS: readonly FilterGroup[] = [
 ];
 
 export const CYCLE_FILTER_OPTIONS: readonly string[] = ['Current', 'Previous', 'All'];
+
+export interface FiltersCopy {
+  readonly title: string;
+  readonly closeLabel: string;
+  readonly deviationLabel: string;
+  readonly sliderName: string;
+  readonly sliderAriaLabel: string;
+  readonly sliderMin: number;
+  readonly sliderMax: number;
+  readonly sliderStep: number;
+  readonly sliderValue: number;
+  readonly cycleLabel: string;
+  readonly defaultCycle: string;
+  readonly resetLabel: string;
+  readonly resetMessage: string;
+  readonly applyLabel: string;
+  readonly applyMessage: string;
+}
+
+export const FILTERS_COPY: FiltersCopy = {
+  title: 'Filters',
+  closeLabel: 'Close',
+  deviationLabel: 'Deviation from recommendation',
+  sliderName: 'Minimum Δ%',
+  sliderAriaLabel: 'Minimum deviation',
+  sliderMin: -20,
+  sliderMax: 20,
+  sliderStep: 0.5,
+  sliderValue: -8,
+  cycleLabel: 'Cycle',
+  defaultCycle: 'Current',
+  resetLabel: 'Reset',
+  resetMessage: 'Filters reset',
+  applyLabel: 'Apply filters',
+  applyMessage: 'Filters applied',
+};

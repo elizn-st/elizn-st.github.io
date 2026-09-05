@@ -1,33 +1,38 @@
 import { useState } from 'react';
+import { usePortalData } from '@/state/DataContext';
 import { cx } from '@/lib/cx';
-import { CYCLE_DAYS, HOME_ALERTS } from '@/data/home';
 import { useDelayedWidth } from '@/hooks/useDelayedWidth';
 import { useOverlays } from '@/state/OverlayContext';
 import { Icon } from '@/components/common/Icon';
 import { GoButton } from '@/components/common/GoButton';
-import { KpiCard } from '@/components/common/KpiCard';
+import { KpiCards } from '@/components/common/KpiCard';
 import { NotificationRow } from '@/components/common/NotificationRow';
-import type { ScreenMeta } from '@/routing/screens';
+import type { RouteId } from '@/routing/routeIds';
+import { breadcrumb } from '@/routing/screens';
+import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
 
-export const homeMeta: ScreenMeta = { section: null, page: 'Home', width: 892 };
+export const homeMeta = ({ navigation }: ScreenMetaInput): ScreenMeta => ({
+  ...breadcrumb(navigation, 'home'),
+  width: 892,
+});
 
-const REVIEW_PROGRESS_PERCENT = 33;
 const PROGRESS_DELAY_MS = 200;
 const ALERT_BASE_DELAY_MS = 120;
 const ALERT_STAGGER_MS = 70;
 
 function CycleWeek() {
+  const { home } = usePortalData();
   const [selected, setSelected] = useState(() =>
     Math.max(
       0,
-      CYCLE_DAYS.findIndex((day) => day.state === 'today'),
+      home.cycleDays.findIndex((day) => day.state === 'today'),
     ),
   );
 
   return (
     <div className="cycle-week">
       <div className="cycle-days">
-        {CYCLE_DAYS.map((day, index) => (
+        {home.cycleDays.map((day, index) => (
           <div
             key={day.day}
             className={cx(
@@ -48,12 +53,13 @@ function CycleWeek() {
 }
 
 function ReviewProgress() {
-  const width = useDelayedWidth(REVIEW_PROGRESS_PERCENT, PROGRESS_DELAY_MS);
+  const { home } = usePortalData();
+  const width = useDelayedWidth(home.copy.progressPercent, PROGRESS_DELAY_MS);
   return (
     <div className="next-action">
       <div className="prog-head">
-        <span className="t">Cycle review progress</span>
-        <span className="v tnum">42 of 128</span>
+        <span className="t">{home.copy.progressTitle}</span>
+        <span className="v tnum">{home.copy.progressValue}</span>
       </div>
       <div className="bar-track">
         <div className="bar-fill" style={{ width }} />
@@ -68,7 +74,7 @@ function PlanCard({
   title,
   subtitle,
 }: {
-  readonly to: 'queue' | 'c1';
+  readonly to: RouteId;
   readonly icon: string;
   readonly title: string;
   readonly subtitle: string;
@@ -93,15 +99,19 @@ function PlanCard({
 }
 
 export function HomeScreen() {
+  const { home, identity } = usePortalData();
   const { openNotifications } = useOverlays();
+  const copy = home.copy;
 
   return (
     <>
       <div className="home-header">
         <div className="greeting">
-          <h1>Good morning, Aisha</h1>
+          <h1>
+            {copy.greetingPrefix}, {identity.firstName}
+          </h1>
           <p>
-            Repricing cycle <strong>Aug 05 – Aug 11</strong> completed
+            {copy.cycleIntro} <strong>{copy.cycleRange}</strong> {copy.cycleOutro}
           </p>
         </div>
         <CycleWeek />
@@ -111,25 +121,27 @@ export function HomeScreen() {
         <div className="g2-col">
           <ReviewProgress />
           <div className="cards-row">
-            <PlanCard
-              to="queue"
-              icon="list-checks"
-              title="Recommendations"
-              subtitle="128 pending approval"
-            />
-            <PlanCard to="c1" icon="chart-line" title="Dashboards" subtitle="Pricing & Forecast" />
+            {copy.planCards.map((card) => (
+              <PlanCard
+                key={card.title}
+                to={card.to}
+                icon={card.icon}
+                title={card.title}
+                subtitle={card.subtitle}
+              />
+            ))}
           </div>
         </div>
         <div className="g2-col">
           <div className="panel">
             <div className="panel-head">
-              <span className="panel-title">Alerts (3)</span>
+              <span className="panel-title">{copy.alertsTitle}</span>
               <button type="button" className="panel-link" onClick={openNotifications}>
-                See all
+                {copy.alertsLink}
               </button>
             </div>
             <div className="notif-list">
-              {HOME_ALERTS.map((alert, index) => (
+              {home.alerts.map((alert, index) => (
                 <NotificationRow
                   key={`${alert.title}-${index}`}
                   severity={alert.severity}
@@ -145,24 +157,7 @@ export function HomeScreen() {
       </div>
 
       <div className="kpi-row">
-        <KpiCard
-          index={0}
-          label="Pending approval"
-          value="128"
-          delta="+9.3%"
-          direction="up"
-          graph
-        />
-        <KpiCard index={1} label="Overdue" value="6" delta="-2" direction="up" graph />
-        <KpiCard index={2} label="Anomaly flags" value="14" delta="+5" direction="down" graph />
-        <KpiCard
-          index={3}
-          label="Revenue uplift, week"
-          value="+3.4%"
-          delta="+0.8pp"
-          direction="up"
-          graph
-        />
+        <KpiCards kpis={home.kpis} />
       </div>
     </>
   );

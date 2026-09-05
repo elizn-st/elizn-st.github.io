@@ -1,37 +1,33 @@
 import { cx } from '@/lib/cx';
+import { usePortalData } from '@/state/DataContext';
 import { signedPct, toneOf } from '@/lib/format';
-import { COMPETITOR_FEED, GAP_ANALYSIS, SOURCE_FRESHNESS } from '@/data/dashboards';
 import { ChartCard } from '@/components/common/ChartCard';
 import { ChartHead } from '@/components/common/ChartHead';
 import { GroupedBarChart } from '@/components/charts/GroupedBarChart';
 import { Icon } from '@/components/common/Icon';
 import { DashboardShell, dashboardMeta } from './DashboardShell';
 
-export const competitorIntelligenceMeta = dashboardMeta('Competitor intelligence');
+export const competitorIntelligenceMeta = dashboardMeta('c2');
 
 const COMPACT_CARD = { padding: '4px var(--s16)' } as const;
 
 export function CompetitorIntelligenceScreen() {
+  const { dashboards, boards } = usePortalData();
+  const board = boards.copy.boards.c2;
+  const [feedTitle, freshnessTitle, gapTitle] = board.sectionTitles;
+
   return (
-    <DashboardShell
-      tab="c2"
-      title="Competitor intelligence"
-      subtitle="Live pricing vs e& across tracked categories"
-    >
+    <DashboardShell tab="c2">
       <ChartCard
         head={
           <ChartHead
-            title="e& price vs competitors by category"
-            subtitle="e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables"
+            title={board.chart.copy.title}
+            subtitle={board.chart.copy.subtitle}
             padLeft={40}
             chartKey="c2-grouped"
           />
         }
-        legend={[
-          { label: 'e&', color: '#950124' },
-          { label: 'Competitor A', color: '#EA6C29' },
-          { label: 'Competitor B', color: '#0D9488' },
-        ]}
+        legend={board.chart.legend}
       >
         {(hidden) => <GroupedBarChart hiddenSeries={hidden} />}
       </ChartCard>
@@ -41,13 +37,13 @@ export function CompetitorIntelligenceScreen() {
           <div className="card pad">
             <div className="chart-head">
               <div className="chart-head-t">
-                <h2 className="sec-title">Competitor price movements feed</h2>
+                <h2 className="sec-title">{feedTitle}</h2>
               </div>
-              <button type="button" className="expand-btn" aria-label="Open">
+              <button type="button" className="expand-btn" aria-label={boards.copy.expandLabel}>
                 <Icon name="arrow-square-out" />
               </button>
             </div>
-            {COMPETITOR_FEED.map((item) => (
+            {dashboards.competitorFeed.map((item) => (
               <div key={item.title} className="feed-item">
                 <div className="feed-title">{item.title}</div>
                 <div className="feed-time tnum">{item.time}</div>
@@ -57,9 +53,9 @@ export function CompetitorIntelligenceScreen() {
         </div>
 
         <div className="c2-col">
-          <h2 className="sec-title">Source freshness</h2>
+          <h2 className="sec-title">{freshnessTitle}</h2>
           <div className="card" style={COMPACT_CARD}>
-            {SOURCE_FRESHNESS.map((source) => (
+            {dashboards.sourceFreshness.map((source) => (
               <div key={source.name} className="kv">
                 <span>{source.name}</span>
                 <span className="tnum" style={{ color: source.color }}>
@@ -71,10 +67,10 @@ export function CompetitorIntelligenceScreen() {
           </div>
 
           <h2 className="sec-title" style={{ marginTop: 'var(--s8)' }}>
-            Gap analysis
+            {gapTitle}
           </h2>
           <div className="card" style={COMPACT_CARD}>
-            {GAP_ANALYSIS.map((row) => (
+            {dashboards.gapAnalysis.map((row) => (
               <div key={row.category} className="kv">
                 <span>{row.category}</span>
                 <span className={cx('pct', toneOf(row.gap), 'tnum')}>{signedPct(row.gap)}</span>

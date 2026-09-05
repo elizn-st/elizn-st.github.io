@@ -1,16 +1,14 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 
 /**
- * Emulator endpoints. These have to agree with the `emulators` block in
- * firebase.json; the browser cannot read that file, so the values live in both
- * places. Change one, change the other.
+ * Auth emulator endpoint. Must agree with the `emulators.auth` port in
+ * firebase.json; the browser cannot read that file. Firestore has its own
+ * pairing in lib/firestore/db.ts.
  */
 const EMULATOR_HOST = '127.0.0.1';
 const AUTH_EMULATOR_PORT = 9099;
-const FIRESTORE_EMULATOR_PORT = 8080;
 
 const env = import.meta.env;
 
@@ -72,12 +70,10 @@ const isFirstInit = existingApps.length === 0;
 
 export const firebaseApp: FirebaseApp = isFirstInit ? initializeApp(options) : existingApps[0]!;
 export const auth = getAuth(firebaseApp);
-export const db = getFirestore(firebaseApp);
 
 if (isFirstInit && usingEmulators) {
-  // Both calls must land before the first auth or Firestore operation, hence
-  // module scope. connectFirestoreEmulator throws if it runs twice, which is
-  // what isFirstInit guards against across hot reloads.
+  // Must land before the first auth operation, hence module scope; isFirstInit
+  // stops a hot reload from connecting twice.
   //
   // disableWarnings is not cosmetic here: the Auth emulator otherwise injects
   // a fixed-position banner element into document.body, which would change the
@@ -86,12 +82,8 @@ if (isFirstInit && usingEmulators) {
   connectAuthEmulator(auth, `http://${EMULATOR_HOST}:${AUTH_EMULATOR_PORT}`, {
     disableWarnings: true,
   });
-  connectFirestoreEmulator(db, EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
 
-  console.info(
-    `[firebase] project "${projectId}" routed to local emulators ` +
-      `(auth :${AUTH_EMULATOR_PORT}, firestore :${FIRESTORE_EMULATOR_PORT})`,
-  );
+  console.info(`[firebase] project "${projectId}" auth routed to emulator :${AUTH_EMULATOR_PORT}`);
 } else if (isFirstInit) {
   console.info(`[firebase] project "${projectId}" — live Firebase, not emulated`);
 }

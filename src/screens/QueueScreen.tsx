@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { QUEUE_ROWS } from '@/data/queue';
+import { usePortalData } from '@/state/DataContext';
 import { aed } from '@/lib/format';
 import { useToast } from '@/state/ToastContext';
 import { Icon } from '@/components/common/Icon';
@@ -12,21 +12,24 @@ import { FilterButton } from '@/components/common/FilterButton';
 import { SearchField } from '@/components/common/SearchField';
 import { Pagination } from '@/components/common/Pagination';
 import { Table, type TableColumn } from '@/components/common/Table';
-import type { ScreenMeta } from '@/routing/screens';
+import { breadcrumb } from '@/routing/screens';
+import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
 
-export const queueMeta: ScreenMeta = {
-  section: 'Recommendations',
-  page: 'Recommendations review queue',
+export const queueMeta = ({ navigation }: ScreenMetaInput): ScreenMeta => ({
+  ...breadcrumb(navigation, 'queue'),
   width: 892,
-};
+});
 
-const APPLIED_FILTERS = ['Category: Electronics', 'Status: Pending', 'Delta: Negative'];
+/** Column widths are layout, so they stay here and pair with the fetched labels. */
+const COLUMN_CLASSES = ['tc', 'tc-85', 'tc-110', 'tc-50', 'tc-215', 'tc-60'];
 
 export function QueueScreen() {
+  const { recommendations, queue } = usePortalData();
+  const copy = queue.copy;
   const toast = useToast();
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set<string>());
 
-  const allSelected = selected.size === QUEUE_ROWS.length;
+  const allSelected = selected.size === recommendations.length;
 
   const toggleRow = useCallback((sku: string) => {
     setSelected((current) => {
@@ -37,21 +40,24 @@ export function QueueScreen() {
     });
   }, []);
 
-  const toggleAll = useCallback((checked: boolean) => {
-    setSelected(checked ? new Set(QUEUE_ROWS.map((row) => row.sku)) : new Set<string>());
-  }, []);
+  const toggleAll = useCallback(
+    (checked: boolean) => {
+      setSelected(checked ? new Set(recommendations.map((row) => row.sku)) : new Set<string>());
+    },
+    [recommendations],
+  );
 
   const bulk = useCallback(
     (action: 'approve' | 'reject') => {
       const count = selected.size;
       if (!count) {
-        toast('Select at least one row first');
+        toast(copy.emptySelectionMessage);
         return;
       }
       const verb = action === 'approve' ? 'approved' : 'rejected';
       toast(`${count} recommendation${count > 1 ? 's' : ''} ${verb}`);
     },
-    [selected, toast],
+    [selected, toast, copy.emptySelectionMessage],
   );
 
   const columns = useMemo<TableColumn[]>(
@@ -62,23 +68,22 @@ export function QueueScreen() {
           <input
             type="checkbox"
             className="checkbox"
-            aria-label="Select all"
+            aria-label={copy.selectAllLabel}
             checked={allSelected}
             onChange={(event) => toggleAll(event.target.checked)}
           />
         ),
       },
-      { className: 'tc', header: 'SKU', label: 'SKU' },
-      { className: 'tc-85', header: 'Current', label: 'Current' },
-      { className: 'tc-110', header: 'Recommended', label: 'Recommended' },
-      { className: 'tc-50', header: 'Δ%', label: 'Δ%' },
-      { className: 'tc-215', header: 'Top factor', label: 'Top factor' },
-      { className: 'tc-60', header: 'Status', label: 'Status' },
+      ...copy.columns.map((label, index) => ({
+        className: COLUMN_CLASSES[index] ?? 'tc',
+        header: label,
+        label,
+      })),
     ],
-    [allSelected, toggleAll],
+    [allSelected, toggleAll, copy.columns, copy.selectAllLabel],
   );
 
-  const rows = QUEUE_ROWS.map((row) => ({
+  const rows = recommendations.map((row) => ({
     key: row.sku,
     cells: [
       {
@@ -112,35 +117,35 @@ export function QueueScreen() {
     <>
       <div className="q-head">
         <div className="q-title">
-          <h1 className="page-title">Recommendations</h1>
-          <span className="chip-sm">Cycle Aug 05–11</span>
+          <h1 className="page-title">{copy.title}</h1>
+          <span className="chip-sm">{copy.chip}</span>
         </div>
-        <ToastButton className="btn" message="Export started">
-          <Icon name="export" /> Export
+        <ToastButton className="btn" message={copy.exportMessage}>
+          <Icon name="export" /> {copy.exportLabel}
         </ToastButton>
         <button type="button" className="btn btn-approve" onClick={() => bulk('approve')}>
-          Approve selected
+          {copy.approveLabel}
         </button>
         <button type="button" className="btn btn-danger" onClick={() => bulk('reject')}>
-          Reject selected
+          {copy.rejectLabel}
         </button>
       </div>
 
       <div className="q-filters">
         <div className="q-search-row">
-          <SearchField placeholder="Search by SKU, brand or factor" ariaLabel="Search" />
+          <SearchField placeholder={copy.searchPlaceholder} ariaLabel={copy.searchAriaLabel} />
           <FilterButton />
         </div>
         <div className="filters-results">
-          <FilterChips labels={APPLIED_FILTERS} />
+          <FilterChips labels={copy.appliedFilters} />
           <span className="vdiv" />
-          <span className="results-count tnum">6 of 128 results</span>
+          <span className="results-count tnum">{copy.resultsCount}</span>
         </div>
       </div>
 
       <Table columns={columns} rows={rows} />
 
-      <Pagination pages={[1, 2, 3, 4, 5, 'dots', 17]} active={3} />
+      <Pagination pages={copy.pagination.pages} active={copy.pagination.active} />
     </>
   );
 }

@@ -1,6 +1,5 @@
-import { SEGMENT_BEHAVIOUR } from '@/data/dashboards';
-import { ELASTICITY_BARS } from '@/data/series';
 import { ChartCard } from '@/components/common/ChartCard';
+import { usePortalData } from '@/state/DataContext';
 import { ChartHead } from '@/components/common/ChartHead';
 import { BarChart } from '@/components/charts/BarChart';
 import { NotificationRow } from '@/components/common/NotificationRow';
@@ -8,12 +7,12 @@ import { Delta } from '@/components/common/Delta';
 import { Table, uniformColumns } from '@/components/common/Table';
 import { DashboardShell, dashboardMeta } from './DashboardShell';
 
-export const customerBehaviourMeta = dashboardMeta('Customer behaviour');
-
-const COLUMNS = uniformColumns(['Segment', 'Reach', 'Conversion', 'Δ vs base price']);
+export const customerBehaviourMeta = dashboardMeta('c5');
 
 export function CustomerBehaviourScreen() {
-  const rows = SEGMENT_BEHAVIOUR.map((row) => ({
+  const { dashboards, series, boards } = usePortalData();
+  const board = boards.copy.boards.c5;
+  const rows = dashboards.segmentBehaviour.map((row) => ({
     key: row.segment,
     cells: [
       { content: row.segment },
@@ -24,30 +23,29 @@ export function CustomerBehaviourScreen() {
   }));
 
   return (
-    <DashboardShell
-      tab="c5"
-      title="Customer behaviour"
-      subtitle="Personalised offer response · UM segments only"
-    >
+    <DashboardShell tab="c5">
       <ChartCard
         head={
           <ChartHead
-            title="Demand elasticity by segment"
-            subtitle="Conversion response per customer segment"
+            title={board.chart.copy.title}
+            subtitle={board.chart.copy.subtitle}
             chartKey="c5-elasticity"
           />
         }
       >
-        {() => <BarChart items={ELASTICITY_BARS} />}
+        {() => <BarChart items={series.elasticityBars} />}
       </ChartCard>
 
-      <NotificationRow
-        severity="warning"
-        icon="warning"
-        title="Approved, privacy-compliant use cases only. Data is aggregated by UM segment."
-      />
+      {board.notices.map((notice) => (
+        <NotificationRow
+          key={notice.title}
+          severity={notice.severity}
+          icon={notice.icon}
+          title={notice.title}
+        />
+      ))}
 
-      <Table columns={COLUMNS} rows={rows} />
+      <Table columns={uniformColumns(board.columns)} rows={rows} />
     </DashboardShell>
   );
 }

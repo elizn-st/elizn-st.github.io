@@ -1,6 +1,8 @@
+import { usePortalData } from '@/state/DataContext';
 import { Icon } from './Icon';
+import type { PageToken } from '@/data/ui';
 
-export type PageToken = number | 'dots';
+export type { PageToken };
 
 export interface PaginationProps {
   readonly pages: readonly PageToken[];
@@ -9,15 +11,16 @@ export interface PaginationProps {
 
 /** Presentational pager — page selection is out of scope for this prototype. */
 export function Pagination({ pages, active }: PaginationProps) {
+  const { chrome } = usePortalData();
   return (
     <nav className="pagination">
       <button type="button" className="pg">
-        <Icon name="caret-left" /> Previous
+        <Icon name="caret-left" /> {chrome.copy.previousLabel}
       </button>
       {pages.map((page, index) =>
         page === 'dots' ? (
           <span key={`dots-${index}`} className="pg dots">
-            ...
+            {chrome.copy.ellipsis}
           </span>
         ) : (
           <button key={page} type="button" className={page === active ? 'pg is-active' : 'pg'}>
@@ -26,7 +29,7 @@ export function Pagination({ pages, active }: PaginationProps) {
         ),
       )}
       <button type="button" className="pg">
-        Next <Icon name="caret-right" />
+        {chrome.copy.nextLabel} <Icon name="caret-right" />
       </button>
     </nav>
   );

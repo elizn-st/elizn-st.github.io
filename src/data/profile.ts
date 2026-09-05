@@ -1,4 +1,8 @@
-export type PermissionState = 'allowed' | 'denied';
+import type { KpiSpec } from './ui';
+
+export const PERMISSION_STATES = ['allowed', 'denied'] as const;
+
+export type PermissionState = (typeof PERMISSION_STATES)[number];
 
 export interface Permission {
   readonly title: string;
@@ -66,4 +70,92 @@ export const DEVICE_SESSIONS: readonly DeviceSession[] = [
     when: 'Aug 04, 09:12',
     current: false,
   },
+];
+
+export interface ProfileCopy {
+  readonly editLabel: string;
+  readonly editIcon: string;
+  readonly editMessage: string;
+  readonly signOutLabel: string;
+  readonly signOutIcon: string;
+  readonly personalTitle: string;
+  readonly fullNameLabel: string;
+  readonly jobTitleLabel: string;
+  readonly departmentLabel: string;
+  readonly workEmailLabel: string;
+  readonly timeZoneLabel: string;
+  readonly languageLabel: string;
+  readonly timeZones: readonly string[];
+  readonly languages: readonly string[];
+  readonly saveLabel: string;
+  readonly saveMessage: string;
+  readonly preferencesTitle: string;
+  readonly preferencesSubtitle: string;
+  readonly permissionsTitle: string;
+  readonly permissionsSubtitle: string;
+  readonly allowedLabel: string;
+  readonly deniedLabel: string;
+  readonly sessionsTitle: string;
+  readonly revokeLabel: string;
+  readonly revokeMessage: string;
+  readonly signOutEverywhereLabel: string;
+  readonly signOutEverywhereMessage: string;
+}
+
+export const PROFILE_COPY: ProfileCopy = {
+  editLabel: 'Edit profile',
+  editIcon: 'pencil-simple',
+  editMessage: 'Profile editor opened',
+  signOutLabel: 'Sign out',
+  signOutIcon: 'sign-out',
+  personalTitle: 'Personal details',
+  fullNameLabel: 'Full name',
+  jobTitleLabel: 'Job title',
+  departmentLabel: 'Department',
+  workEmailLabel: 'Work email',
+  timeZoneLabel: 'Time zone',
+  languageLabel: 'Language',
+  timeZones: ['Gulf Standard Time (GST, +4)', 'UTC'],
+  languages: ['English', 'العربية — not in scope this phase'],
+  saveLabel: 'Save changes',
+  saveMessage: 'Profile details saved',
+  preferencesTitle: 'Notification preferences',
+  preferencesSubtitle: 'Applies to the bell in the top bar and to email digests.',
+  permissionsTitle: 'Role and permissions',
+  permissionsSubtitle: 'Granted by the DLA governance matrix. Contact Admin to change.',
+  allowedLabel: 'Allowed',
+  deniedLabel: 'No access',
+  sessionsTitle: 'Active sessions',
+  revokeLabel: 'Revoke',
+  revokeMessage: 'Session revoked',
+  signOutEverywhereLabel: 'Sign out everywhere else',
+  signOutEverywhereMessage: 'All other sessions signed out',
+};
+
+export const PROFILE_KPIS: readonly KpiSpec[] = [
+  {
+    label: 'Decisions this cycle',
+    value: '42',
+    delta: '+18',
+    direction: 'up',
+    tone: '',
+    graph: false,
+  },
+  {
+    label: 'Approval rate',
+    value: '88.1%',
+    delta: '+1.4pp',
+    direction: 'up',
+    tone: 'pos',
+    graph: false,
+  },
+  {
+    label: 'Avg review time',
+    value: '2m 14s',
+    delta: '-22s',
+    direction: 'up',
+    tone: '',
+    graph: false,
+  },
+  { label: 'Overrides used', value: '3', delta: '-1', direction: 'up', tone: '', graph: false },
 ];

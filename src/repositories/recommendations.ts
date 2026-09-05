@@ -1,53 +1,33 @@
-import { collection, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { createConverter } from '@/lib/firestore/converter';
-import { useFirestoreCollection } from '@/hooks/useFirestore';
 import { DECISION_STATUSES } from '@/data/queue';
+import type { Parser } from '@/hooks/useFirestore';
 import type { DecisionStatus, QueueRow } from '@/data/queue';
-import type { CollectionState, Parser } from '@/hooks/useFirestore';
 
 export const RECOMMENDATIONS = 'recommendations';
 
 /**
- * Reference implementation for the mock migration: the shape stays `QueueRow`
- * from src/data/queue.ts, so screens keep the type they already use and the
- * mocks stay the single definition of the domain.
- *
- * `note` is optional because it is blank for most rows, and a customer
- * clearing a field in the Console removes it rather than setting "".
+ * Firestore returns documents in no guaranteed order, and these lists are
+ * authored rather than alphabetical, so position is stored explicitly and the
+ * app sorts on it.
  */
-export const parseRecommendation: Parser<QueueRow> = (fields) => ({
-  sku: fields.string('sku'),
-  note: fields.optionalString('note', ''),
-  current: fields.number('current'),
-  recommended: fields.number('recommended'),
-  delta: fields.number('delta'),
-  topFactor: fields.string('topFactor'),
-  status: fields.oneOf<DecisionStatus>('status', DECISION_STATUSES),
-});
+export type Ordered<T> = T & { readonly order: number };
 
-/** Read-only on purpose: authored by the seed script and the Firebase Console. */
-export const recommendationConverter = createConverter<QueueRow>({
-  parse: parseRecommendation,
-});
+export const byOrder = <T>(rows: readonly Ordered<T>[]): readonly T[] =>
+  [...rows].sort((a, b) => a.order - b.order);
 
 /**
- * Live recommendations, optionally narrowed to one status.
+ * Shapes stay `QueueRow` from src/data/queue.ts, so screens keep the type they
+ * already use and the mock modules remain the single definition of the domain.
  *
- * The `orderBy('sku')` plus a `where` on status needs no composite index
- * (Firestore covers single-field-equality + one order-by automatically). Adding
- * a second filter later will, and the emulator prints the exact index to paste
- * into firestore.indexes.json.
+ * `note` is optional because it is blank for most rows, and a customer
+ * clearing the field in the Console removes it rather than setting "".
  */
-export function useRecommendations(status?: DecisionStatus): CollectionState<QueueRow> {
-  return useFirestoreCollection(
-    () => {
-      const base = collection(db, RECOMMENDATIONS);
-      return status
-        ? query(base, where('status', '==', status), orderBy('sku'))
-        : query(base, orderBy('sku'));
-    },
-    parseRecommendation,
-    [status],
-  );
-}
+export const parseRecommendation: Parser<Ordered<QueueRow>> = (f) => ({
+  order: f.number('order'),
+  sku: f.string('sku'),
+  note: f.optionalString('note', ''),
+  current: f.number('current'),
+  recommended: f.number('recommended'),
+  delta: f.number('delta'),
+  topFactor: f.string('topFactor'),
+  status: f.oneOf<DecisionStatus>('status', DECISION_STATUSES),
+});

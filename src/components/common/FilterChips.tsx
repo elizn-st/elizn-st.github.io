@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cx } from '@/lib/cx';
+import { usePortalData } from '@/state/DataContext';
 import { Icon } from './Icon';
 
 const REMOVE_MS = 200;
@@ -11,6 +12,7 @@ interface ChipState {
 
 /** Applied-filter chips; dismissing one plays the `chipOut` animation first. */
 export function FilterChips({ labels }: { readonly labels: readonly string[] }) {
+  const { chrome } = usePortalData();
   const [chips, setChips] = useState<readonly ChipState[]>(() =>
     labels.map((label) => ({ label, removing: false })),
   );
@@ -29,7 +31,11 @@ export function FilterChips({ labels }: { readonly labels: readonly string[] }) 
       {chips.map((chip) => (
         <span key={chip.label} className={cx('chip is-active', chip.removing && 'removing')}>
           {chip.label}{' '}
-          <button type="button" aria-label="Remove" onClick={() => remove(chip.label)}>
+          <button
+            type="button"
+            aria-label={chrome.copy.removeLabel}
+            onClick={() => remove(chip.label)}
+          >
             <Icon name="x" />
           </button>
         </span>

@@ -11,4 +11,5 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .emulator-data
-.env.production
+service-account*.json
+*-firebase-adminsdk-*.json

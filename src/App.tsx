@@ -4,6 +4,7 @@ import { OverlayProvider } from '@/state/OverlayContext';
 import { ChartFocusProvider } from '@/state/ChartFocusContext';
 import { AuthProvider } from '@/state/AuthContext';
 import { AuthGate } from '@/components/auth/AuthGate';
+import { DataProvider } from '@/state/DataContext';
 import { AppShell } from '@/components/layout/AppShell';
 
 export default function App() {
@@ -16,7 +17,9 @@ export default function App() {
                 toasts, outside AppShell so no shell renders around it. */}
             <AuthProvider>
               <AuthGate>
-                <AppShell />
+                <DataProvider>
+                  <AppShell />
+                </DataProvider>
               </AuthGate>
             </AuthProvider>
           </OverlayProvider>

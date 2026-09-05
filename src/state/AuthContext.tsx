@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { placeholderAuthBackend } from '@/auth/placeholderBackend';
+import { firebaseAuthBackend } from '@/auth/firebaseBackend';
 import type { ReactNode } from 'react';
 import type { AuthBackend, AuthUser } from '@/auth/types';
 
 /**
  * Three states, not two. `loading` covers the gap before the backend has
- * reported a restored session -- without it the gate renders the login screen
- * for a frame on every refresh, even for a signed-in user.
+ * reported a restored session. Firebase resolves persistence asynchronously,
+ * so without this the gate would render the login screen for a frame on every
+ * refresh, even for a signed-in user.
  */
 export type AuthState =
   | { readonly status: 'loading'; readonly user: null }
@@ -24,11 +25,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export interface AuthProviderProps {
   readonly children: ReactNode;
-  /** Injectable so tests -- and the coming Firebase backend -- can replace it. */
+  /** Injectable so a test or a story can stand in for Firebase. */
   readonly backend?: AuthBackend;
 }
 
-export function AuthProvider({ children, backend = placeholderAuthBackend }: AuthProviderProps) {
+export function AuthProvider({ children, backend = firebaseAuthBackend }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({ status: 'loading', user: null });
 
   useEffect(

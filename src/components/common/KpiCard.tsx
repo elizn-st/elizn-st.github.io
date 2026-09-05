@@ -1,8 +1,10 @@
 import { cx } from '@/lib/cx';
+import { usePortalData } from '@/state/DataContext';
 import type { Tone } from '@/lib/format';
 import { useCountUp } from '@/hooks/useCountUp';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { Icon } from './Icon';
+import type { KpiSpec } from '@/data/ui';
 
 export interface KpiCardProps {
   readonly label: string;
@@ -29,6 +31,7 @@ export function KpiCard({
   tone,
   index = 0,
 }: KpiCardProps) {
+  const { chrome } = usePortalData();
   const displayed = useCountUp(value, COUNT_BASE_DELAY_MS + index * COUNT_STAGGER_MS);
 
   return (
@@ -43,7 +46,7 @@ export function KpiCard({
       {delta && (
         <div className="scorecard">
           <div className="score-row">
-            <span className="score-label">Since last week</span>
+            <span className="score-label">{chrome.copy.scoreLabel}</span>
             <span className={cx('score-badge', direction)}>
               <span className="score-icon">
                 <Icon name={direction === 'up' ? 'trend-up' : 'trend-down'} />
@@ -58,7 +61,30 @@ export function KpiCard({
           )}
         </div>
       )}
-      {graph && <div className="kpi-foot tnum">Last updated: 16:53 05-08-2026</div>}
+      {graph && <div className="kpi-foot tnum">{chrome.copy.lastUpdated}</div>}
     </article>
+  );
+}
+
+/**
+ * A row's worth of scorecards from the copy document. A fragment, so the
+ * `.kpi-row` wrapper stays with the screen that owns the layout.
+ */
+export function KpiCards({ kpis }: { readonly kpis: readonly KpiSpec[] }) {
+  return (
+    <>
+      {kpis.map((kpi, index) => (
+        <KpiCard
+          key={kpi.label}
+          index={index}
+          label={kpi.label}
+          value={kpi.value}
+          delta={kpi.delta || null}
+          direction={kpi.direction || 'up'}
+          tone={kpi.tone || undefined}
+          graph={kpi.graph}
+        />
+      ))}
+    </>
   );
 }

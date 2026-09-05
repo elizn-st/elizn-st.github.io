@@ -1,5 +1,5 @@
 import { Fragment, useRef } from 'react';
-import { COMBO_WEEKS } from '@/data/series';
+import { usePortalData } from '@/state/DataContext';
 import { vars } from '@/lib/style';
 import { EMPTY_HIDDEN, hiddenClass, type HiddenSeries } from './types';
 import { layoutCategoryLabels, useChartViewBoxWidth } from './geometry';
@@ -11,25 +11,27 @@ const PAD_RIGHT = 40;
 const PAD_TOP = 6;
 const BASE_PAD_BOTTOM = 18;
 
-const MAX_DECISIONS = 140;
-const MIN_REVENUE = 410;
-const MAX_REVENUE = 500;
-
 /** Stacked approval/rejection bars with the revenue line on a second axis. */
 export function ComboChart({
   hiddenSeries = EMPTY_HIDDEN,
 }: {
   readonly hiddenSeries?: HiddenSeries;
 }) {
+  const { series } = usePortalData();
+  const {
+    maxDecisions: MAX_DECISIONS,
+    minRevenue: MIN_REVENUE,
+    maxRevenue: MAX_REVENUE,
+  } = series.chartConfig;
   const svgRef = useRef<SVGSVGElement>(null);
   const width = useChartViewBoxWidth(svgRef);
 
   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
-  const slot = innerWidth / COMBO_WEEKS.length;
+  const slot = innerWidth / series.comboWeeks.length;
   const barWidth = slot * 0.42;
 
   const labels = layoutCategoryLabels(
-    COMBO_WEEKS.map((week) => week.week),
+    series.comboWeeks.map((week) => week.week),
     slot,
   );
   const innerHeight = HEIGHT - PAD_TOP - BASE_PAD_BOTTOM - labels.extraBottom;
@@ -42,7 +44,7 @@ export function ComboChart({
   const gridValues: number[] = [];
   for (let value = 0; value <= MAX_DECISIONS; value += 20) gridValues.push(value);
 
-  const revenuePoints = COMBO_WEEKS.map<[number, number]>((week, index) => [
+  const revenuePoints = series.comboWeeks.map<[number, number]>((week, index) => [
     PAD_LEFT + slot * index + slot / 2,
     yRevenue(week.revenue),
   ]);
@@ -76,7 +78,7 @@ export function ComboChart({
         );
       })}
 
-      {COMBO_WEEKS.map((week, index) => {
+      {series.comboWeeks.map((week, index) => {
         const centerX = PAD_LEFT + slot * index + slot / 2;
         return (
           <Fragment key={week.week}>
@@ -123,7 +125,7 @@ export function ComboChart({
       />
       {revenuePoints.map(([x, y], index) => (
         <circle
-          key={COMBO_WEEKS[index].week}
+          key={series.comboWeeks[index].week}
           cx={x.toFixed(1)}
           cy={y.toFixed(1)}
           r={3.5}
@@ -134,7 +136,7 @@ export function ComboChart({
           data-s={2}
           style={{ animationDelay: `${900 + index * 50}ms` }}
         >
-          <title>{`${COMBO_WEEKS[index].week} · AED ${COMBO_WEEKS[index].revenue}K`}</title>
+          <title>{`${series.comboWeeks[index].week} · AED ${series.comboWeeks[index].revenue}K`}</title>
         </circle>
       ))}
 

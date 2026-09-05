@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:prod": "vite --mode production",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "emulators": "firebase emulators:start --import=.emulator-data --export-on-exit",
     "emulators:fresh": "firebase emulators:start",
+    "seed": "node scripts/seed.ts",
+    "grant": "node scripts/grant-access.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -23,6 +26,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "firebase-admin": "^14.3.0",
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
