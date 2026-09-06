@@ -4,7 +4,7 @@ import { db } from '@/lib/firestore/db';
 import { useFirestoreCollection, useFirestoreDoc } from '@/hooks/useFirestore';
 import { byOrder, parseRecommendation, RECOMMENDATIONS } from '@/repositories/recommendations';
 import { DECISIONS, parseDecision, parseFilters } from '@/repositories/decisions';
-import { parseDashboards, parseSeries } from '@/repositories/analytics';
+import { parseCycle, parseDashboards, parseSeries } from '@/repositories/analytics';
 import { parseBoards, parseChartDetails } from '@/repositories/boards';
 import { parsePricingRule, RULES } from '@/repositories/rules';
 import { parseReport, REPORTS } from '@/repositories/reports';
@@ -37,7 +37,7 @@ import type { RuleRecord } from '@/repositories/rules';
 import type { ReportRecord } from '@/repositories/reports';
 import type { PersonRecord } from '@/repositories/admin';
 import type { AuthClaims } from '@/auth/types';
-import type { DashboardsDoc, SeriesDoc } from '@/repositories/analytics';
+import type { CycleDoc, DashboardsDoc, SeriesDoc } from '@/repositories/analytics';
 import type { BoardsDoc, ChartDetailsDoc } from '@/repositories/boards';
 import type { FiltersDoc } from '@/repositories/decisions';
 import type {
@@ -77,6 +77,8 @@ export interface PortalData {
   readonly people: readonly PersonRecord[];
   readonly series: SeriesDoc;
   readonly dashboards: DashboardsDoc;
+  /** Per-day activity behind the home screen's cycle strip. */
+  readonly cycle: CycleDoc;
   readonly home: HomeDoc;
   readonly queue: QueueDoc;
   readonly history: HistoryDoc;
@@ -159,6 +161,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
 
   const series = useFirestoreDoc(() => doc(db, 'analytics/series'), parseSeries, []);
   const dashboards = useFirestoreDoc(() => doc(db, 'analytics/dashboards'), parseDashboards, []);
+  const cycle = useFirestoreDoc(() => doc(db, 'analytics/cycle'), parseCycle, []);
   const home = useFirestoreDoc(() => doc(db, 'content/home'), parseHome, []);
   const queue = useFirestoreDoc(() => doc(db, 'content/queue'), parseQueue, []);
   const history = useFirestoreDoc(() => doc(db, 'content/history'), parseHistoryScreen, []);
@@ -193,6 +196,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       ({
         'analytics/series': series,
         'analytics/dashboards': dashboards,
+        'analytics/cycle': cycle,
         'content/home': home,
         'content/queue': queue,
         'content/history': history,
@@ -214,6 +218,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     [
       series,
       dashboards,
+      cycle,
       home,
       queue,
       history,
@@ -307,6 +312,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       people: byOrder(people.data),
       series: series.data!,
       dashboards: dashboards.data!,
+      cycle: cycle.data!,
       home: home.data!,
       queue: queue.data!,
       history: history.data!,
@@ -335,6 +341,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     people.data,
     series.data,
     dashboards.data,
+    cycle.data,
     home.data,
     queue.data,
     history.data,

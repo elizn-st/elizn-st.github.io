@@ -1,4 +1,5 @@
 import { CYCLE_DAY_STATES, SEVERITIES } from '@/data/home';
+import { CYCLE_METRIC_IDS } from '@/data/cycleMetrics';
 import { DECISION_STATUSES } from '@/data/queue';
 import { PERMISSION_STATES } from '@/data/profile';
 import { COMPARISON_TONES } from '@/data/simulator';
@@ -11,6 +12,7 @@ import { KPI_DIRECTIONS, KPI_TONES } from '@/data/ui';
 import { readActions, readChartCopy, readKpis, readLegend, readNotice, readPagination } from './ui';
 import type { Parser } from '@/hooks/useFirestore';
 import type { Alert, CycleDay, HomeCopy, PlanCard, Severity } from '@/data/home';
+import type { CycleKpiSpec, CycleMetricId } from '@/data/cycleMetrics';
 import type { DecisionStatus, QueueCopy } from '@/data/queue';
 import type { HistoryCopy } from '@/data/history';
 import type {
@@ -89,7 +91,7 @@ export interface HomeDoc {
   readonly cycleDays: readonly CycleDay[];
   readonly alerts: readonly Alert[];
   readonly copy: HomeCopy;
-  readonly kpis: readonly KpiSpec[];
+  readonly kpis: readonly CycleKpiSpec[];
 }
 
 const readPlanCards = (f: FieldReaderLike): readonly PlanCard[] =>
@@ -98,7 +100,17 @@ const readPlanCards = (f: FieldReaderLike): readonly PlanCard[] =>
     to: c.oneOf<RouteId>('to', ROUTE_IDS),
     icon: c.string('icon'),
     title: c.string('title'),
+    metric: c.oneOfOrEmpty<CycleMetricId>('metric', CYCLE_METRIC_IDS),
     subtitle: c.string('subtitle'),
+  }));
+
+/** The home scorecards name a metric; the figure itself is derived per day. */
+const readCycleKpis = (f: FieldReaderLike): readonly CycleKpiSpec[] =>
+  f.objects('kpis', (k) => ({
+    label: k.string('label'),
+    metric: k.oneOf<CycleMetricId>('metric', CYCLE_METRIC_IDS),
+    note: k.optionalString('note', ''),
+    graph: k.optionalBoolean('graph', false),
   }));
 
 type FieldReaderLike = Parameters<Parser<unknown>>[0];
@@ -110,6 +122,9 @@ export const parseHome: Parser<HomeDoc> = (f) => ({
     state: d.oneOfOrEmpty('state', CYCLE_DAY_STATES),
   })),
   alerts: f.objects('alerts', (a) => ({
+    // The day joins the alert to the strip; an alert with no day is filtered
+    // out of every day rather than shown on all of them.
+    day: a.string('day'),
     severity: a.oneOf<Severity>('severity', SEVERITIES),
     icon: a.string('icon'),
     title: a.string('title'),
@@ -119,15 +134,19 @@ export const parseHome: Parser<HomeDoc> = (f) => ({
     greetingPrefix: c.string('greetingPrefix'),
     cycleIntro: c.string('cycleIntro'),
     cycleRange: c.string('cycleRange'),
-    cycleOutro: c.string('cycleOutro'),
+    dayPastLabel: c.string('dayPastLabel'),
+    dayTodayLabel: c.string('dayTodayLabel'),
+    dayUpcomingLabel: c.string('dayUpcomingLabel'),
+    cycleDaysLabel: c.string('cycleDaysLabel'),
     progressTitle: c.string('progressTitle'),
-    progressValue: c.string('progressValue'),
-    progressPercent: c.number('progressPercent'),
+    progressJoin: c.string('progressJoin'),
+    compareLabel: c.string('compareLabel'),
     planCards: readPlanCards(c),
     alertsTitle: c.string('alertsTitle'),
+    alertsEmpty: c.string('alertsEmpty'),
     alertsLink: c.string('alertsLink'),
   })),
-  kpis: readKpis(f, 'kpis'),
+  kpis: readCycleKpis(f),
 });
 
 export interface QueueDoc {

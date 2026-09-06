@@ -168,9 +168,11 @@ Everything a reader sees is data: headings, chips, button labels, scorecard
 figures, table headers, chart titles and legends, pager labels, placeholders,
 even the breadcrumb labels and the empty-search hint. `src/data/` is now the
 seed fixture and the type definitions -- one definition of each shape, with the
-values living in Firestore -- and no screen imports a value from it. The only
-two things it still exports to the app are pure functions: `filterSearchIndex`
-and `navHighlightFor`.
+values living in Firestore -- and no screen imports a figure from it. What it
+still exports to the app is pure functions: `filterSearchIndex`,
+`navHighlightFor`, and the derivations behind the two filters (`ranges.ts`,
+`boardMetrics.ts` and `chartMetrics.ts` for the dashboards' window;
+`cycleMetrics.ts` for the home screen's cycle day).
 
 What stays in code is the frame the copy is poured into:
 

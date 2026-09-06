@@ -23,6 +23,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { QUEUE_COPY, QUEUE_ROWS } from '../src/data/queue.ts';
 import { AUDIT_LOG, HISTORY_COPY, HISTORY_KPIS } from '../src/data/history.ts';
 import { CYCLE_DAYS, HOME_ALERTS, HOME_COPY, HOME_KPIS } from '../src/data/home.ts';
+import { CYCLE_ACTIVITY } from '../src/data/cycle.ts';
 import {
   DETAIL_COPY,
   FACTOR_CONTRIBUTIONS,
@@ -168,6 +169,9 @@ const wholeDocuments = {
     competitorFeed: COMPETITOR_FEED,
     sourceFreshness: SOURCE_FRESHNESS,
     forecastQuality: FORECAST_QUALITY,
+  },
+  'analytics/cycle': {
+    days: CYCLE_ACTIVITY,
   },
   'content/home': {
     cycleDays: CYCLE_DAYS,

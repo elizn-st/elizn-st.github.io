@@ -278,7 +278,9 @@ border-radius:var(--r12);padding:12px var(--s16) 8px}
 letter-spacing:-.035px;color:var(--tx);transition:transform 150ms var(--eo),background 200ms,color 200ms}
 .item-day:hover{transform:scale(1.05)}
 .cycle-day.past .item-day{color:var(--tx3)}
-.cycle-day.today .item-day{background:var(--maroon);color:#fff;font-weight:600}
+.cycle-day:not(.is-selected) .item-day:hover{background:var(--n0)}
+.cycle-day.is-today .item-day{box-shadow:inset 0 0 0 1px var(--maroon);color:var(--maroon);font-weight:600}
+.cycle-day.is-selected .item-day{background:var(--maroon);color:#fff;font-weight:600;box-shadow:none}
 
 .grid-2{display:flex;gap:var(--s16);align-items:stretch;width:100%}
 .g2-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:var(--s16)}
@@ -322,6 +324,8 @@ display:flex;flex-direction:column;gap:var(--s16);height:100%}
 .panel-link{font-size:12px;color:var(--n60)}
 .panel-link:hover{color:var(--tx)}
 .notif-list{display:flex;flex-direction:column;gap:6px;width:100%}
+.notif-empty{padding:var(--s16);border:1px dashed var(--border);border-radius:var(--r8);
+font-size:13px;line-height:18px;color:var(--tx2);text-align:center}
 .notification{display:flex;align-items:center;gap:var(--s8);padding:var(--s8) var(--s12);border-radius:var(--r8);
 animation:nIn 360ms var(--eo) backwards}
 @keyframes nIn{from{opacity:0;transform:translateX(10px)}}
@@ -940,6 +944,7 @@ transition:opacity 220ms var(--eo)}
 @media (hover:none){
   .kpi-card:hover,.plan-card:hover,.next-action:hover,.sim-card:hover{transform:none;box-shadow:var(--sh)}
   .item-day:hover{transform:none}
+  .cycle-day:not(.is-selected) .item-day:hover{background:none}
   .nav-item,.session,.convo{min-height:44px}
 }
 

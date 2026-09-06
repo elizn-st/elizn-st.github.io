@@ -3,6 +3,7 @@ import type { Parser } from '@/hooks/useFirestore';
 import type { DecisionStatus } from '@/data/queue';
 import type { CategorySeries, ChartConfig, ComboWeek, SegmentSeries } from '@/data/series';
 import type { FeedItem, ForecastQualityRow, SourceFreshness } from '@/data/dashboards';
+import type { CycleActivity } from '@/data/cycle';
 
 /**
  * `analytics/series` and `analytics/dashboards`: the chart series and table
@@ -131,5 +132,27 @@ export const parseDashboards: Parser<DashboardsDoc> = (f) => ({
     mape: r.string('mape'),
     bias: r.string('bias'),
     quality: r.oneOf<DecisionStatus>('quality', DECISION_STATUSES),
+  })),
+});
+
+/**
+ * `analytics/cycle`: what each day of the repricing cycle did.
+ *
+ * Separate from `analytics/dashboards` because the two answer to different
+ * controls -- the boards filter by week, the home screen filters by day -- and
+ * the home screen should not read a document it uses none of.
+ */
+export interface CycleDoc {
+  readonly days: readonly CycleActivity[];
+}
+
+export const parseCycle: Parser<CycleDoc> = (f) => ({
+  days: f.objects('days', (d) => ({
+    day: d.string('day'),
+    generated: d.number('generated'),
+    reviewed: d.number('reviewed'),
+    overdue: d.number('overdue'),
+    anomalies: d.number('anomalies'),
+    uplift: d.number('uplift'),
   })),
 });
