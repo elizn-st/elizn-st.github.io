@@ -11,7 +11,7 @@ export const NAV_ITEMS: readonly NavEntry[] = [
   { id: 'home', label: 'Home', icon: 'house' },
   { id: 'c1', label: 'Dashboards', icon: 'chart-line' },
   { id: 'queue', label: 'Recommendations', icon: 'list-checks' },
-  { id: 'rules', label: 'Rules', icon: 'sliders-horizontal', disabled: true },
+  { id: 'rules', label: 'Rules', icon: 'sliders-horizontal' },
   { id: 'reports', label: 'Reports', icon: 'file-text', disabled: true },
   { id: 'admin', label: 'Admin', icon: 'user-gear', disabled: true },
 ];

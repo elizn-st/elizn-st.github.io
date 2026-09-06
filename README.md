@@ -29,10 +29,12 @@ Auth is wired and every screen reads its content from Firestore. The modules in
 `src/data/` are no longer read by the app: they are the seed fixture and the home
 of the shared types, which is why the interfaces and unions still live there.
 
-`src/data/navigation.ts` deliberately stays in code -- `NAV_ITEMS` and
-`DASHBOARD_TABS` map onto route ids that must exist in the bundle, and
-`navHighlightFor` is a pure function, so making them editable would only let a
-Console edit break routing.
+Navigation is content too: the sidebar labels, icons and dashboard tabs live in
+`content/navigation`. Only the `id`s stay code-shaped -- they name routes that
+must exist in the bundle -- so the parser validates every one against
+`ROUTE_IDS` and `DASHBOARD_TAB_IDS`, and a Console typo fails with a named field
+instead of a dead link. `navHighlightFor` remains a pure function in
+`src/data/navigation.ts`.
 
 `firebase/auth` costs about 105 kB raw (31 kB gzipped). `firebase/firestore` is
 another ~300 kB, which is why it is initialised in its own module
@@ -110,8 +112,10 @@ Two behaviours are deliberate:
   the provider's detail to the console and show a generic message, so a raw
   `Firebase: Error (auth/...)` string never reaches a user.
 - **`displayName` falls back to the email's local part.** Firebase leaves it
-  null for email/password accounts, so `aisha.alkhayyat@eand.com` renders as
-  "Aisha Alkhayyat" until a profile document supplies a real name.
+  null for email/password accounts, so `aisha.alkhayyat@eand.com` would render
+  as "Aisha Alkhayyat". The seed sets a real `displayName` on the account, and
+  `subscribe` refreshes the cached profile once per session, so the fallback is
+  a safety net rather than the normal path.
 
 To sign in locally, create a user in the Emulator UI at
 `http://127.0.0.1:4000/auth`, or from a shell:
@@ -150,7 +154,7 @@ one-shot fetches. That is deliberate: a document edited in the Firebase Console
 reaches every running app within about a second, with no reload and no refetch
 call.
 
-`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- two
+`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- three
 collections, seventeen shared documents and the signed-in user's own -- and
 gates the app on the first snapshot, so `usePortalData()` returns plain loaded
 values and screens stay synchronous. The alternative -- a request and a skeleton
@@ -236,6 +240,47 @@ validating reader (`src/lib/firestore/parse.ts`). Two consequences worth knowing
 Pass `deps` the primitives a query is derived from, not the query object --
 rebuilding a `Query` each render and depending on its identity is the standard
 way to get an infinite resubscribe loop.
+
+### The Rules screen
+
+The one screen that was not transcribed from the prototype. Pricing rules are the
+guardrails the engine must satisfy before a recommendation reaches the queue --
+they are why a decision carries "Margin protection guardrail" as a reason code
+and why the detail screen's gauge has a floor and a ceiling at all. One of the
+seeded rules is the AED 3,400–4,100 band that gauge draws.
+
+It is read-only, on purpose. Profile → Role and permissions already says this
+role has no access to "Configure guardrails and floors", so the screen inspects
+and explains rather than edits, and a change is _proposed_ rather than applied.
+
+**Rules are a collection, one document per rule**, like `recommendations` and
+`decisions`, because a rule is an individually addressable thing a customer
+edits on its own. **Everything numeric on the page is derived from that
+collection** rather than stored, so one Console edit moves the table, the stage
+counts, the coverage list, the binding bars and all four scorecards together:
+
+| Shown             | Counted as                                 |
+| ----------------- | ------------------------------------------ |
+| Active rules      | `status = active`                          |
+| Hard guardrails   | `enforcement = hard` and `status = active` |
+| Guardrail blocks  | `sum(blocked)`                             |
+| Awaiting approval | change-log entries with `status = pending` |
+
+"Guardrail blocks" is deliberately not "recommendations blocked": two rules can
+block the same recommendation, so only the event count is arithmetically safe to
+sum. The same caution applies to bindings.
+
+`content/rules` holds the copy, the seven pipeline stages and the change log.
+The stages are the governance point -- precedence decides which constraint wins,
+so a regulatory floor is never traded away for a parity target -- and each rule
+names the stage it belongs to, validated against `RULE_STAGES`.
+
+Unlike the transcribed screens, whose filters are decorative, **this one's
+filters work**: search spans name, note, scope, threshold, owner, stage and
+enforcement; the status control filters; each chip clears the specific filter it
+stands for; the count and empty state follow. That needed optional controlled
+props on `SearchField`, `Segmented` and `FilterChips`, all backwards compatible
+-- left out, each component behaves exactly as before.
 
 ### Going live, and giving the customer edit access
 

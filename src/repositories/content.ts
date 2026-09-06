@@ -3,8 +3,10 @@ import { DECISION_STATUSES } from '@/data/queue';
 import { PERMISSION_STATES } from '@/data/profile';
 import { COMPARISON_TONES } from '@/data/simulator';
 import { BREADCRUMB_IDS, DASHBOARD_TAB_IDS } from '@/data/navigation';
+import { RULE_ENFORCEMENTS, RULE_METRICS, RULE_STAGES, RULE_STATUSES } from '@/data/rules';
 import { ROUTE_IDS } from '@/routing/routeIds';
-import { readActions, readChartCopy, readKpis, readLegend, readPagination } from './ui';
+import { KPI_DIRECTIONS, KPI_TONES } from '@/data/ui';
+import { readActions, readChartCopy, readKpis, readLegend, readNotice, readPagination } from './ui';
 import type { Parser } from '@/hooks/useFirestore';
 import type { Alert, CycleDay, HomeCopy, PlanCard, Severity } from '@/data/home';
 import type { DecisionStatus, QueueCopy } from '@/data/queue';
@@ -25,7 +27,16 @@ import type {
 } from '@/data/profile';
 import type { SearchCopy, SearchGroup } from '@/data/search';
 import type { ComparisonRow, ComparisonTone, ScenarioInput, SimulatorCopy } from '@/data/simulator';
-import type { RulesCopy } from '@/data/rules';
+import type {
+  RuleChange,
+  RuleEnforcement,
+  RuleKpiSpec,
+  RuleMetric,
+  RuleStage,
+  RuleStageCopy,
+  RuleStatus,
+  RulesCopy,
+} from '@/data/rules';
 import type {
   Breadcrumb,
   BreadcrumbId,
@@ -392,11 +403,90 @@ export interface RulesDoc {
   readonly copy: RulesCopy;
 }
 
+/** A label per member of a small union, read as a required entry each. */
+const readLabels = <T extends string>(
+  f: FieldReaderLike,
+  field: string,
+  keys: readonly T[],
+): Record<T, string> =>
+  f.object(field, (o) => {
+    const labels = {} as Record<T, string>;
+    for (const key of keys) labels[key] = o.string(key);
+    return labels;
+  });
+
+const readRuleKpis = (f: FieldReaderLike): readonly RuleKpiSpec[] =>
+  f.objects('kpis', (k) => ({
+    // The value is counted from the rules collection; `metric` picks which count.
+    metric: k.oneOf<RuleMetric>('metric', RULE_METRICS),
+    label: k.string('label'),
+    delta: k.optionalString('delta', ''),
+    direction: k.oneOfOrEmpty('direction', KPI_DIRECTIONS),
+    tone: k.oneOfOrEmpty('tone', KPI_TONES),
+  }));
+
+const readStages = (f: FieldReaderLike): readonly RuleStageCopy[] =>
+  f.objects('stages', (s) => ({
+    key: s.oneOf<RuleStage>('key', RULE_STAGES),
+    title: s.string('title'),
+    description: s.string('description'),
+  }));
+
+const readChangeLog = (f: FieldReaderLike): readonly RuleChange[] =>
+  f.objects('changeLog', (c) => ({
+    date: c.string('date'),
+    rule: c.string('rule'),
+    change: c.string('change'),
+    requester: c.string('requester'),
+    status: c.oneOf<DecisionStatus>('status', DECISION_STATUSES),
+  }));
+
 export const parseRules: Parser<RulesDoc> = (f) => ({
   copy: f.object('copy', (c) => ({
     title: c.string('title'),
-    body: c.string('body'),
-    backLabel: c.string('backLabel'),
+    chip: c.string('chip'),
+    exportLabel: c.string('exportLabel'),
+    exportIcon: c.string('exportIcon'),
+    exportMessage: c.string('exportMessage'),
+    proposeLabel: c.string('proposeLabel'),
+    proposeIcon: c.string('proposeIcon'),
+    proposeMessage: c.string('proposeMessage'),
+    notice: readNotice(c, 'notice'),
+    kpis: readRuleKpis(c),
+
+    tableTitle: c.string('tableTitle'),
+    tableSubtitle: c.string('tableSubtitle'),
+    searchPlaceholder: c.string('searchPlaceholder'),
+    searchAriaLabel: c.string('searchAriaLabel'),
+    statusFilters: c.strings('statusFilters'),
+    statusChipPrefix: c.string('statusChipPrefix'),
+    searchChipPrefix: c.string('searchChipPrefix'),
+    columns: c.strings('columns'),
+    resultsOf: c.string('resultsOf'),
+    rulesUnit: c.string('rulesUnit'),
+    rulesUnitOne: c.string('rulesUnitOne'),
+    emptyMessage: c.string('emptyMessage'),
+    emptyIcon: c.string('emptyIcon'),
+
+    enforcementLabels: readLabels<RuleEnforcement>(c, 'enforcementLabels', RULE_ENFORCEMENTS),
+    enforcementIcons: readLabels<RuleEnforcement>(c, 'enforcementIcons', RULE_ENFORCEMENTS),
+    statusLabels: readLabels<RuleStatus>(c, 'statusLabels', RULE_STATUSES),
+
+    bindingTitle: c.string('bindingTitle'),
+    bindingSubtitle: c.string('bindingSubtitle'),
+
+    stagesTitle: c.string('stagesTitle'),
+    stagesSubtitle: c.string('stagesSubtitle'),
+    stages: readStages(c),
+
+    coverageTitle: c.string('coverageTitle'),
+    coverageSubtitle: c.string('coverageSubtitle'),
+    coverageHardTitle: c.string('coverageHardTitle'),
+    coverageSoftTitle: c.string('coverageSoftTitle'),
+
+    changeLogTitle: c.string('changeLogTitle'),
+    changeLogSubtitle: c.string('changeLogSubtitle'),
+    changeLog: readChangeLog(c),
   })),
 });
 

@@ -1,13 +1,16 @@
 import { KPI_DIRECTIONS, KPI_TONES } from '@/data/ui';
+import { SEVERITIES } from '@/data/home';
 import type { FieldReader } from '@/lib/firestore/parse';
 import type {
   ActionSpec,
   ChartCopy,
   KpiSpec,
   LegendSpec,
+  NoticeSpec,
   PageToken,
   PaginationSpec,
 } from '@/data/ui';
+import type { Severity } from '@/data/home';
 
 /**
  * Readers for the shapes that repeat across the copy documents. Each takes a
@@ -65,3 +68,10 @@ export const readRows = (f: FieldReader, field: string): readonly (readonly stri
   if (value === undefined || value === null) return [];
   return f.objects(field, (row) => row.strings('cells'));
 };
+
+export const readNotice = (f: FieldReader, field: string): NoticeSpec =>
+  f.object(field, (n) => ({
+    severity: n.oneOf<Severity>('severity', SEVERITIES),
+    icon: n.string('icon'),
+    title: n.string('title'),
+  }));

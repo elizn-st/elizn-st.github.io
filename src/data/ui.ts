@@ -1,3 +1,5 @@
+import type { Severity } from './home';
+
 /**
  * Shapes shared by the per-screen copy documents.
  *
@@ -64,4 +66,11 @@ export interface ActionSpec {
   readonly label: string;
   readonly icon: string;
   readonly message: string;
+}
+
+/** An inline alert strip declared in content: severity, icon and one line. */
+export interface NoticeSpec {
+  readonly severity: Severity;
+  readonly icon: string;
+  readonly title: string;
 }

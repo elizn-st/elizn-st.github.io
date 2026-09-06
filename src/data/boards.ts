@@ -1,5 +1,4 @@
-import type { Severity } from './home';
-import type { ChartCopy, KpiSpec, LegendSpec } from './ui';
+import type { ChartCopy, KpiSpec, LegendSpec, NoticeSpec } from './ui';
 import type { DashboardTabId } from './navigation';
 
 /**
@@ -15,11 +14,7 @@ export interface BoardChart {
   readonly seriesNames: readonly string[];
 }
 
-export interface NoticeSpec {
-  readonly severity: Severity;
-  readonly icon: string;
-  readonly title: string;
-}
+export type { NoticeSpec };
 
 export interface BoardCopy {
   readonly title: string;

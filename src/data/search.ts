@@ -99,6 +99,41 @@ export const SEARCH_INDEX: readonly SearchGroup[] = [
         route: 'history',
       },
       { icon: 'chats', label: 'Ask the AI analyst', meta: 'LLM / RAG analyst', route: 'chat' },
+      {
+        icon: 'sliders-horizontal',
+        label: 'Review pricing rules',
+        meta: 'Guardrails, floors and ceilings',
+        route: 'rules',
+      },
+    ],
+  },
+  {
+    label: 'Rules',
+    entries: [
+      {
+        icon: 'percent',
+        label: 'Category margin floor — Smartphones',
+        meta: 'Margin protection · ≥ 12.0%',
+        route: 'rules',
+      },
+      {
+        icon: 'arrows-out-line-vertical',
+        label: 'Absolute price band — flagship handsets',
+        meta: 'Price band · AED 3,400 – 4,100',
+        route: 'rules',
+      },
+      {
+        icon: 'speedometer',
+        label: 'Maximum move per cycle',
+        meta: 'Change velocity · ±8.0%',
+        route: 'rules',
+      },
+      {
+        icon: 'scales',
+        label: 'Competitor parity band',
+        meta: 'Parity · −2.0% to +5.0%',
+        route: 'rules',
+      },
     ],
   },
 ];

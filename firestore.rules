@@ -44,10 +44,10 @@ service cloud.firestore {
     }
 
     // ---- org-wide data -------------------------------------------------------
-    // `recommendations` and `decisions` are one document per row, so they can
-    // be queried and edited individually. `analytics`, `content` and `config`
-    // hold documents that are always read whole -- one per chart series or per
-    // screen's copy -- because Firestore bills per document read.
+    // `recommendations`, `decisions` and `rules` are one document per row, so
+    // they can be queried and edited individually. `analytics`, `content` and
+    // `config` hold documents that are always read whole -- one per chart series
+    // or per screen's copy -- because Firestore bills per document read.
     //
     // Approving or rejecting a recommendation is a decision, not an edit: it
     // belongs in `decisions` as a new document, so `recommendations` itself
@@ -59,6 +59,15 @@ service cloud.firestore {
     }
 
     match /decisions/{decisionId} {
+      allow read: if hasPortalAccess();
+      allow write: if isAdmin();
+    }
+
+    // Guardrail rules are read by everyone with portal access and changed only
+    // by Admin -- which is the whole point of the Rules screen being read-only
+    // for a reviewer. A proposed change is a request, not an edit, so nothing
+    // here takes a client write.
+    match /rules/{ruleId} {
       allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }

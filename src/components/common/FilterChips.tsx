@@ -5,41 +5,54 @@ import { Icon } from './Icon';
 
 const REMOVE_MS = 200;
 
-interface ChipState {
-  readonly label: string;
-  readonly removing: boolean;
+export interface FilterChipsProps {
+  readonly labels: readonly string[];
+  /**
+   * Supply it to own the list: the chip plays its exit animation and then the
+   * parent is told, so it can drop the filter the chip stands for. Left out,
+   * the chip simply removes itself and nothing else changes.
+   */
+  readonly onRemove?: (label: string) => void;
 }
 
 /** Applied-filter chips; dismissing one plays the `chipOut` animation first. */
-export function FilterChips({ labels }: { readonly labels: readonly string[] }) {
+export function FilterChips({ labels, onRemove }: FilterChipsProps) {
   const { chrome } = usePortalData();
-  const [chips, setChips] = useState<readonly ChipState[]>(() =>
-    labels.map((label) => ({ label, removing: false })),
-  );
+  const [removing, setRemoving] = useState<ReadonlySet<string>>(() => new Set<string>());
+  /** Only used when the parent does not own the list. */
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set<string>());
+
+  const without = (set: ReadonlySet<string>, label: string) => {
+    const next = new Set(set);
+    next.delete(label);
+    return next;
+  };
 
   const remove = (label: string) => {
-    setChips((current) =>
-      current.map((chip) => (chip.label === label ? { ...chip, removing: true } : chip)),
-    );
+    setRemoving((current) => new Set(current).add(label));
     window.setTimeout(() => {
-      setChips((current) => current.filter((chip) => chip.label !== label));
+      setRemoving((current) => without(current, label));
+      if (onRemove) onRemove(label);
+      else setDismissed((current) => new Set(current).add(label));
     }, REMOVE_MS);
   };
 
   return (
     <div className="applied">
-      {chips.map((chip) => (
-        <span key={chip.label} className={cx('chip is-active', chip.removing && 'removing')}>
-          {chip.label}{' '}
-          <button
-            type="button"
-            aria-label={chrome.copy.removeLabel}
-            onClick={() => remove(chip.label)}
-          >
-            <Icon name="x" />
-          </button>
-        </span>
-      ))}
+      {labels
+        .filter((label) => !dismissed.has(label))
+        .map((label) => (
+          <span key={label} className={cx('chip is-active', removing.has(label) && 'removing')}>
+            {label}{' '}
+            <button
+              type="button"
+              aria-label={chrome.copy.removeLabel}
+              onClick={() => remove(label)}
+            >
+              <Icon name="x" />
+            </button>
+          </span>
+        ))}
     </div>
   );
 }

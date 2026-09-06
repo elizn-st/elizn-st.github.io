@@ -6,6 +6,7 @@ import { byOrder, parseRecommendation, RECOMMENDATIONS } from '@/repositories/re
 import { DECISIONS, parseDecision, parseFilters } from '@/repositories/decisions';
 import { parseDashboards, parseSeries } from '@/repositories/analytics';
 import { parseBoards, parseChartDetails } from '@/repositories/boards';
+import { parsePricingRule, RULES } from '@/repositories/rules';
 import {
   parseChat,
   parseChrome,
@@ -28,6 +29,7 @@ import type { ReactNode } from 'react';
 import type { DocumentState } from '@/hooks/useFirestore';
 import type { QueueRow } from '@/data/queue';
 import type { AuditEntry } from '@/data/history';
+import type { RuleRecord } from '@/repositories/rules';
 import type { DashboardsDoc, SeriesDoc } from '@/repositories/analytics';
 import type { BoardsDoc, ChartDetailsDoc } from '@/repositories/boards';
 import type { FiltersDoc } from '@/repositories/decisions';
@@ -58,6 +60,8 @@ import type {
 export interface PortalData {
   readonly recommendations: readonly QueueRow[];
   readonly decisions: readonly AuditEntry[];
+  /** The guardrail rules themselves; `rules` below is the screen's copy. */
+  readonly pricingRules: readonly RuleRecord[];
   readonly series: SeriesDoc;
   readonly dashboards: DashboardsDoc;
   readonly home: HomeDoc;
@@ -127,6 +131,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     [],
   );
   const decisions = useFirestoreCollection(() => collection(db, DECISIONS), parseDecision, []);
+  const pricingRules = useFirestoreCollection(() => collection(db, RULES), parsePricingRule, []);
 
   const series = useFirestoreDoc(() => doc(db, 'analytics/series'), parseSeries, []);
   const dashboards = useFirestoreDoc(() => doc(db, 'analytics/dashboards'), parseDashboards, []);
@@ -227,7 +232,13 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   }, [uid, user?.displayName, user?.email, userProfile.data]);
 
   const diagnosis = useMemo(() => {
-    const everything = [recommendations, decisions, ...Object.values(documents), userProfile];
+    const everything = [
+      recommendations,
+      decisions,
+      pricingRules,
+      ...Object.values(documents),
+      userProfile,
+    ];
 
     const denied = everything.some((s) => s.status === 'error' && isPermissionDenied(s.error));
     if (denied) return { kind: 'denied' as const };
@@ -248,13 +259,14 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     if (problems.length) return { kind: 'error' as const, problems };
     if (everything.some((s) => s.status === 'loading')) return { kind: 'loading' as const };
     return { kind: 'ready' as const };
-  }, [recommendations, decisions, documents, userProfile]);
+  }, [recommendations, decisions, pricingRules, documents, userProfile]);
 
   const value = useMemo<PortalData | null>(() => {
     if (diagnosis.kind !== 'ready') return null;
     return {
       recommendations: byOrder(recommendations.data),
       decisions: byOrder(decisions.data),
+      pricingRules: byOrder(pricingRules.data),
       series: series.data!,
       dashboards: dashboards.data!,
       home: home.data!,
@@ -278,6 +290,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     diagnosis.kind,
     recommendations.data,
     decisions.data,
+    pricingRules.data,
     series.data,
     dashboards.data,
     home.data,

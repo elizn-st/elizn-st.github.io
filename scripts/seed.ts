@@ -69,7 +69,7 @@ import {
   SIMULATOR_KPIS,
 } from '../src/data/simulator.ts';
 import { CYCLE_FILTER_OPTIONS, FILTER_GROUPS, FILTERS_COPY } from '../src/data/filters.ts';
-import { RULES_COPY } from '../src/data/rules.ts';
+import { PRICING_RULES, RULES_COPY } from '../src/data/rules.ts';
 import { NAVIGATION_COPY } from '../src/data/navigation.ts';
 import { BOARDS_COPY } from '../src/data/boards.ts';
 import { CHART_DETAILS_COPY } from '../src/data/chartDetails.ts';
@@ -146,6 +146,7 @@ const perDocument = {
     (entry, order) =>
       [slug(`${entry.date} ${entry.time} ${entry.sku}`), { ...entry, order }] as const,
   ),
+  rules: PRICING_RULES.map((rule, order) => [slug(rule.name), { ...rule, order }] as const),
 };
 
 /**

@@ -138,6 +138,9 @@ font-weight:500;white-space:nowrap}
 .badge-approved{background:var(--ok-bg);color:var(--ok)}
 .badge-pending,.badge-flagged{background:var(--warn-bg);color:var(--warn)}
 .badge-rejected{background:var(--bad-bg);color:var(--bad)}
+/* An override is a manual intervention rather than an outcome, so it reads in
+   the informational blue instead of the approve/reject pair. */
+.badge-overridden{background:var(--info-bg);color:var(--info)}
 .badge-neutral{background:var(--n10);color:var(--tx2)}
 .chip-sm{display:inline-flex;padding:4px 8px;border-radius:var(--rf);background:var(--n10);
 font-size:11px;font-weight:600;color:var(--tx2)}
@@ -249,7 +252,7 @@ transition:background 140ms,border-color 140ms,color 140ms}
 .tc{flex:1 1 0}
 .tc-check{flex:0 0 20px}
 .tc-85{flex:0 0 85px}.tc-110{flex:0 0 110px}.tc-50{flex:0 0 50px}
-.tc-215{flex:0 0 215px}.tc-60{flex:0 0 60px}
+.tc-215{flex:0 0 215px}.tc-60{flex:0 0 60px}.tc-140{flex:0 0 140px}
 .tnote{display:block;font-size:11px;color:var(--tx3);margin-top:2px}
 .checkbox{appearance:none;width:20px;height:20px;border:1.5px solid var(--n30);border-radius:5px;
 background:var(--surface);display:grid;place-items:center;cursor:pointer;flex:none;
@@ -1038,3 +1041,14 @@ transition:opacity 220ms var(--eo)}
   .auth-page{padding:var(--s16)}
   .auth-card{padding:var(--s24) var(--s16)}
 }
+
+/* ==========================================================================
+   RULES — the guardrail set
+   ========================================================================== */
+
+/* Six columns need more room than the shared 720px before they crowd; below
+   this the table scrolls inside its own card rather than squeezing the name. */
+.rules-table .tbl-scroll>.trow{min-width:920px}
+
+/* Step number inside the shared .cd-bullet square, whose own rule sizes icons. */
+.rule-stage-no{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
