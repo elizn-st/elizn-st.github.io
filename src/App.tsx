@@ -5,6 +5,7 @@ import { AuthProvider } from '@/state/AuthContext';
 import { AuthGate } from '@/components/auth/AuthGate';
 import { DataProvider } from '@/state/DataContext';
 import { NotificationsProvider } from '@/state/NotificationsContext';
+import { DashboardRangeProvider } from '@/state/RangeContext';
 import { AppShell } from '@/components/layout/AppShell';
 
 export default function App() {
@@ -19,7 +20,9 @@ export default function App() {
               <DataProvider>
                 {/* Inside DataProvider so the read flag resets with the session. */}
                 <NotificationsProvider>
-                  <AppShell />
+                  <DashboardRangeProvider>
+                    <AppShell />
+                  </DashboardRangeProvider>
                 </NotificationsProvider>
               </DataProvider>
             </AuthGate>

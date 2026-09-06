@@ -1,5 +1,6 @@
 import { ChartCard } from '@/components/common/ChartCard';
 import { usePortalData } from '@/state/DataContext';
+import { segmentBars, segmentRows } from '@/data/boardMetrics';
 import { ChartHead } from '@/components/common/ChartHead';
 import { BarChart } from '@/components/charts/BarChart';
 import { NotificationRow } from '@/components/common/NotificationRow';
@@ -10,42 +11,49 @@ import { DashboardShell, dashboardMeta } from './DashboardShell';
 export const customerBehaviourMeta = dashboardMeta('c5');
 
 export function CustomerBehaviourScreen() {
-  const { dashboards, series, boards } = usePortalData();
+  const { series, boards } = usePortalData();
   const board = boards.copy.boards.c5;
-  const rows = dashboards.segmentBehaviour.map((row) => ({
-    key: row.segment,
-    cells: [
-      { content: row.segment },
-      { content: row.reach, className: 'tnum' },
-      { content: row.conversion, className: 'tnum' },
-      { content: <Delta value={row.deltaVsBase} /> },
-    ],
-  }));
 
   return (
     <DashboardShell tab="c5">
-      <ChartCard
-        head={
-          <ChartHead
-            title={board.chart.copy.title}
-            subtitle={board.chart.copy.subtitle}
-            chartKey="c5-elasticity"
-          />
-        }
-      >
-        {() => <BarChart items={series.elasticityBars} />}
-      </ChartCard>
+      {(range) => {
+        const rows = segmentRows(series, range).map((row) => ({
+          key: row.segment,
+          cells: [
+            { content: row.segment },
+            { content: row.reach, className: 'tnum' },
+            { content: row.conversion, className: 'tnum' },
+            { content: <Delta value={row.deltaVsBase} /> },
+          ],
+        }));
 
-      {board.notices.map((notice) => (
-        <NotificationRow
-          key={notice.title}
-          severity={notice.severity}
-          icon={notice.icon}
-          title={notice.title}
-        />
-      ))}
+        return (
+          <>
+            <ChartCard
+              head={
+                <ChartHead
+                  title={board.chart.copy.title}
+                  subtitle={board.chart.copy.subtitle}
+                  chartKey="c5-elasticity"
+                />
+              }
+            >
+              {() => <BarChart items={segmentBars(series, range)} />}
+            </ChartCard>
 
-      <Table columns={uniformColumns(board.columns)} rows={rows} />
+            {board.notices.map((notice) => (
+              <NotificationRow
+                key={notice.title}
+                severity={notice.severity}
+                icon={notice.icon}
+                title={notice.title}
+              />
+            ))}
+
+            <Table columns={uniformColumns(board.columns)} rows={rows} />
+          </>
+        );
+      }}
     </DashboardShell>
   );
 }

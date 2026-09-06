@@ -1,5 +1,6 @@
 import { Fragment, useRef } from 'react';
 import { usePortalData } from '@/state/DataContext';
+import type { ComboWeek } from '@/data/series';
 import { vars } from '@/lib/style';
 import { EMPTY_HIDDEN, hiddenClass, type HiddenSeries } from './types';
 import { layoutCategoryLabels, useChartViewBoxWidth } from './geometry';
@@ -10,11 +11,21 @@ const PAD_LEFT = 40;
 const PAD_RIGHT = 40;
 const PAD_TOP = 6;
 const BASE_PAD_BOTTOM = 18;
+/**
+ * Widest a stacked bar may be drawn.
+ *
+ * Without it a one-week window gives each bar 42% of the whole plot area, and
+ * the chart reads as a coloured wall rather than a week.
+ */
+const MAX_BAR_WIDTH = 44;
 
 /** Stacked approval/rejection bars with the revenue line on a second axis. */
 export function ComboChart({
+  weeks,
   hiddenSeries = EMPTY_HIDDEN,
 }: {
+  /** Already sliced to the selected window by the board. */
+  readonly weeks: readonly ComboWeek[];
   readonly hiddenSeries?: HiddenSeries;
 }) {
   const { series } = usePortalData();
@@ -27,11 +38,11 @@ export function ComboChart({
   const width = useChartViewBoxWidth(svgRef);
 
   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
-  const slot = innerWidth / series.comboWeeks.length;
-  const barWidth = slot * 0.42;
+  const slot = innerWidth / weeks.length;
+  const barWidth = Math.min(slot * 0.42, MAX_BAR_WIDTH);
 
   const labels = layoutCategoryLabels(
-    series.comboWeeks.map((week) => week.week),
+    weeks.map((week) => week.week),
     slot,
   );
   const innerHeight = HEIGHT - PAD_TOP - BASE_PAD_BOTTOM - labels.extraBottom;
@@ -44,7 +55,7 @@ export function ComboChart({
   const gridValues: number[] = [];
   for (let value = 0; value <= MAX_DECISIONS; value += 20) gridValues.push(value);
 
-  const revenuePoints = series.comboWeeks.map<[number, number]>((week, index) => [
+  const revenuePoints = weeks.map<[number, number]>((week, index) => [
     PAD_LEFT + slot * index + slot / 2,
     yRevenue(week.revenue),
   ]);
@@ -78,7 +89,7 @@ export function ComboChart({
         );
       })}
 
-      {series.comboWeeks.map((week, index) => {
+      {weeks.map((week, index) => {
         const centerX = PAD_LEFT + slot * index + slot / 2;
         return (
           <Fragment key={week.week}>
@@ -125,7 +136,7 @@ export function ComboChart({
       />
       {revenuePoints.map(([x, y], index) => (
         <circle
-          key={series.comboWeeks[index].week}
+          key={weeks[index].week}
           cx={x.toFixed(1)}
           cy={y.toFixed(1)}
           r={3.5}
@@ -136,7 +147,7 @@ export function ComboChart({
           data-s={2}
           style={{ animationDelay: `${900 + index * 50}ms` }}
         >
-          <title>{`${series.comboWeeks[index].week} · AED ${series.comboWeeks[index].revenue}K`}</title>
+          <title>{`${weeks[index].week} · AED ${weeks[index].revenue}K`}</title>
         </circle>
       ))}
 

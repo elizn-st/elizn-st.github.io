@@ -31,23 +31,16 @@ import {
   REASON_CODES,
 } from '../src/data/detail.ts';
 import {
-  CATEGORY_PRICES,
+  CATEGORY_SERIES,
   CHART_CONFIG,
   COMBO_WEEKS,
-  ELASTICITY_BARS,
   FORECAST_SERIES,
   IMPACT_SERIES,
   PRICE_HISTORY,
+  SEGMENT_SERIES,
   WEEK_LABELS,
 } from '../src/data/series.ts';
-import {
-  CATEGORY_PERFORMANCE,
-  COMPETITOR_FEED,
-  FORECAST_QUALITY,
-  GAP_ANALYSIS,
-  SEGMENT_BEHAVIOUR,
-  SOURCE_FRESHNESS,
-} from '../src/data/dashboards.ts';
+import { COMPETITOR_FEED, FORECAST_QUALITY, SOURCE_FRESHNESS } from '../src/data/dashboards.ts';
 import {
   NOTIFICATION_GROUPS,
   NOTIFICATION_TABS,
@@ -164,20 +157,17 @@ const wholeDocuments = {
   'analytics/series': {
     weekLabels: WEEK_LABELS,
     comboWeeks: COMBO_WEEKS,
-    categoryPrices: CATEGORY_PRICES,
+    categorySeries: CATEGORY_SERIES,
     priceHistory: PRICE_HISTORY,
     forecastSeries: FORECAST_SERIES,
     impactSeries: IMPACT_SERIES,
-    elasticityBars: ELASTICITY_BARS,
+    segmentSeries: SEGMENT_SERIES,
     chartConfig: CHART_CONFIG,
   },
   'analytics/dashboards': {
-    categoryPerformance: CATEGORY_PERFORMANCE,
     competitorFeed: COMPETITOR_FEED,
     sourceFreshness: SOURCE_FRESHNESS,
-    gapAnalysis: GAP_ANALYSIS,
     forecastQuality: FORECAST_QUALITY,
-    segmentBehaviour: SEGMENT_BEHAVIOUR,
   },
   'content/home': {
     cycleDays: CYCLE_DAYS,

@@ -1,15 +1,8 @@
 import { DECISION_STATUSES } from '@/data/queue';
 import type { Parser } from '@/hooks/useFirestore';
 import type { DecisionStatus } from '@/data/queue';
-import type { CategoryPrices, ChartConfig, ComboWeek, ElasticityBar } from '@/data/series';
-import type {
-  CategoryPerformance,
-  FeedItem,
-  ForecastQualityRow,
-  GapRow,
-  SegmentRow,
-  SourceFreshness,
-} from '@/data/dashboards';
+import type { CategorySeries, ChartConfig, ComboWeek, SegmentSeries } from '@/data/series';
+import type { FeedItem, ForecastQualityRow, SourceFreshness } from '@/data/dashboards';
 
 /**
  * `analytics/series` and `analytics/dashboards`: the chart series and table
@@ -24,7 +17,7 @@ import type {
 export interface SeriesDoc {
   readonly weekLabels: readonly string[];
   readonly comboWeeks: readonly ComboWeek[];
-  readonly categoryPrices: readonly CategoryPrices[];
+  readonly categorySeries: readonly CategorySeries[];
   readonly priceHistory: {
     readonly eand: readonly number[];
     readonly competitorA: readonly number[];
@@ -33,12 +26,18 @@ export interface SeriesDoc {
   readonly forecastSeries: {
     readonly forecast: readonly number[];
     readonly actual: readonly number[];
+    readonly revenueForecast: readonly number[];
+    readonly revenueActual: readonly number[];
   };
+  /** Weekly increments; the chart re-accumulates them within the window. */
   readonly impactSeries: {
     readonly withAdpa: readonly number[];
     readonly baseline: readonly number[];
+    readonly markdown: readonly number[];
+    readonly incrementalUnits: readonly number[];
+    readonly marginDelta: readonly number[];
   };
-  readonly elasticityBars: readonly ElasticityBar[];
+  readonly segmentSeries: readonly SegmentSeries[];
   readonly chartConfig: ChartConfig;
 }
 
@@ -49,12 +48,19 @@ export const parseSeries: Parser<SeriesDoc> = (f) => ({
     approved: w.number('approved'),
     rejected: w.number('rejected'),
     revenue: w.number('revenue'),
+    priceVsBaseline: w.number('priceVsBaseline'),
+    volumeVsBaseline: w.number('volumeVsBaseline'),
+    revenueVsBaseline: w.number('revenueVsBaseline'),
+    marginVsBaseline: w.number('marginVsBaseline'),
   })),
-  categoryPrices: f.objects('categoryPrices', (c) => ({
+  categorySeries: f.objects('categorySeries', (c) => ({
     category: c.string('category'),
-    eand: c.number('eand'),
-    competitorA: c.number('competitorA'),
-    competitorB: c.number('competitorB'),
+    eand: c.numbers('eand'),
+    competitorA: c.numbers('competitorA'),
+    competitorB: c.numbers('competitorB'),
+    priceVsBaseline: c.numbers('priceVsBaseline'),
+    revenue: c.numbers('revenue'),
+    conversion: c.string('conversion'),
   })),
   priceHistory: f.object('priceHistory', (p) => ({
     eand: p.numbers('eand'),
@@ -64,16 +70,23 @@ export const parseSeries: Parser<SeriesDoc> = (f) => ({
   forecastSeries: f.object('forecastSeries', (p) => ({
     forecast: p.numbers('forecast'),
     actual: p.numbers('actual'),
+    revenueForecast: p.numbers('revenueForecast'),
+    revenueActual: p.numbers('revenueActual'),
   })),
   impactSeries: f.object('impactSeries', (p) => ({
     withAdpa: p.numbers('withAdpa'),
     baseline: p.numbers('baseline'),
+    markdown: p.numbers('markdown'),
+    incrementalUnits: p.numbers('incrementalUnits'),
+    marginDelta: p.numbers('marginDelta'),
   })),
-  elasticityBars: f.objects('elasticityBars', (b) => ({
-    label: b.string('label'),
-    value: b.number('value'),
-    display: b.string('display'),
-    color: b.string('color'),
+  segmentSeries: f.objects('segmentSeries', (s) => ({
+    segment: s.string('segment'),
+    elasticity: s.numbers('elasticity'),
+    deltaVsBase: s.numbers('deltaVsBase'),
+    reach: s.string('reach'),
+    conversion: s.string('conversion'),
+    color: s.string('color'),
   })),
   chartConfig: f.object('chartConfig', (c) => ({
     maxDecisions: c.number('maxDecisions'),
@@ -89,22 +102,21 @@ export const parseSeries: Parser<SeriesDoc> = (f) => ({
   })),
 });
 
+/**
+ * What is left once the range control derives the rest.
+ *
+ * Category performance, the price gaps and the segment table all used to be
+ * stored here; each is now computed from the weekly series for the selected
+ * window. These three are genuinely cycle-level reference data with no weekly
+ * dimension to filter on.
+ */
 export interface DashboardsDoc {
-  readonly categoryPerformance: readonly CategoryPerformance[];
   readonly competitorFeed: readonly FeedItem[];
   readonly sourceFreshness: readonly SourceFreshness[];
-  readonly gapAnalysis: readonly GapRow[];
   readonly forecastQuality: readonly ForecastQualityRow[];
-  readonly segmentBehaviour: readonly SegmentRow[];
 }
 
 export const parseDashboards: Parser<DashboardsDoc> = (f) => ({
-  categoryPerformance: f.objects('categoryPerformance', (r) => ({
-    category: r.string('category'),
-    priceVsBaseline: r.number('priceVsBaseline'),
-    revenue: r.number('revenue'),
-    conversion: r.string('conversion'),
-  })),
   competitorFeed: f.objects('competitorFeed', (r) => ({
     title: r.string('title'),
     time: r.string('time'),
@@ -114,20 +126,10 @@ export const parseDashboards: Parser<DashboardsDoc> = (f) => ({
     age: r.string('age'),
     color: r.string('color'),
   })),
-  gapAnalysis: f.objects('gapAnalysis', (r) => ({
-    category: r.string('category'),
-    gap: r.number('gap'),
-  })),
   forecastQuality: f.objects('forecastQuality', (r) => ({
     category: r.string('category'),
     mape: r.string('mape'),
     bias: r.string('bias'),
     quality: r.oneOf<DecisionStatus>('quality', DECISION_STATUSES),
-  })),
-  segmentBehaviour: f.objects('segmentBehaviour', (r) => ({
-    segment: r.string('segment'),
-    reach: r.string('reach'),
-    conversion: r.string('conversion'),
-    deltaVsBase: r.number('deltaVsBase'),
   })),
 });

@@ -1,3 +1,5 @@
+import type { RangeId, RangeOption } from './ranges';
+import type { ChartMetricId } from './chartMetrics';
 import type { RouteId } from '@/routing/routeIds';
 import type { ChartDetailKey } from '@/screens/chartDetail/keys';
 import type { KpiDirection, LegendSpec } from './ui';
@@ -12,6 +14,8 @@ import type { KpiDirection, LegendSpec } from './ui';
  */
 export interface ChartStatSpec {
   readonly label: string;
+  /** '' when the figure genuinely does not vary with the selected window. */
+  readonly metric: ChartMetricId | '';
   readonly value: string;
   readonly delta: string;
   readonly direction: KpiDirection;
@@ -31,8 +35,8 @@ export interface ChartDetailCopy {
 }
 
 export interface ChartDetailsCopy {
-  readonly rangeOptions: readonly string[];
-  readonly defaultRange: string;
+  readonly rangeOptions: readonly RangeOption[];
+  readonly defaultRange: RangeId;
   readonly exportLabel: string;
   readonly exportIcon: string;
   readonly exportMessage: string;
@@ -45,7 +49,12 @@ export interface ChartDetailsCopy {
 const noRows: readonly (readonly string[])[] = [];
 
 export const CHART_DETAILS_COPY: ChartDetailsCopy = {
-  rangeOptions: ['4W', '8W', '13W', 'ALL'],
+  rangeOptions: [
+    { id: '1W', label: '1W' },
+    { id: '4W', label: '4W' },
+    { id: '8W', label: '8W' },
+    { id: 'ALL', label: 'ALL' },
+  ],
   defaultRange: '8W',
   exportLabel: 'Export data',
   exportIcon: 'export',
@@ -57,13 +66,25 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
     'c1-combo': {
       section: 'Dashboards',
       title: 'Approved decisions vs actual revenue',
-      subtitle: 'Approval volume rose 48% over 8 weeks while revenue climbed from AED 410K to 495K',
+      subtitle: 'Approval and rejection volume against realised revenue, week by week',
       back: 'c1',
       stats: [
-        { label: 'Total decisions', value: '788', delta: '+48%', direction: 'up' },
-        { label: 'Approved', value: '688', delta: '87.3%', direction: 'up' },
-        { label: 'Rejected', value: '100', delta: '12.7%', direction: 'down' },
-        { label: 'Revenue, cycle end', value: 'AED 495K', delta: '+20.7%', direction: 'up' },
+        {
+          label: 'Total decisions',
+          metric: 'decisionsTotal',
+          value: '',
+          delta: '',
+          direction: 'up',
+        },
+        { label: 'Approved', metric: 'decisionsApproved', value: '', delta: '', direction: 'up' },
+        { label: 'Rejected', metric: 'decisionsRejected', value: '', delta: '', direction: 'down' },
+        {
+          label: 'Revenue, window end',
+          metric: 'revenueEnd',
+          value: '',
+          delta: '',
+          direction: 'up',
+        },
       ],
       legend: [
         { label: 'Rejected', color: 'var(--dv-rej)', series: 1 },
@@ -86,10 +107,16 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
         'e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',
       back: 'c2',
       stats: [
-        { label: 'Categories tracked', value: '4', delta: 'live', direction: 'up' },
-        { label: 'Avg premium vs A', value: '+2.8%', delta: '', direction: 'up' },
-        { label: 'Avg premium vs B', value: '+1.4%', delta: '', direction: 'up' },
-        { label: 'Feed freshness', value: '12 min', delta: 'ok', direction: 'up' },
+        {
+          label: 'Categories tracked',
+          metric: 'categoriesTracked',
+          value: '',
+          delta: 'live',
+          direction: 'up',
+        },
+        { label: 'Avg premium vs A', metric: 'premiumVsA', value: '', delta: '', direction: 'up' },
+        { label: 'Avg premium vs B', metric: 'premiumVsB', value: '', delta: '', direction: 'up' },
+        { label: 'Feed freshness', metric: '', value: '12 min', delta: 'ok', direction: 'up' },
       ],
       legend: [
         { label: 'e&', color: '#950124', series: 0 },
@@ -111,10 +138,16 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
       subtitle: 'Model output tracked against realised units per week',
       back: 'c3',
       stats: [
-        { label: 'MAPE, demand', value: '6.8%', delta: '-0.4pp', direction: 'up' },
-        { label: 'MAPE, revenue', value: '5.1%', delta: '-0.2pp', direction: 'up' },
-        { label: 'Bias', value: '+1.2%', delta: '', direction: 'down' },
-        { label: 'Weeks within target', value: '6 of 8', delta: '', direction: 'up' },
+        { label: 'MAPE, demand', metric: 'mapeDemand', value: '', delta: '', direction: 'up' },
+        { label: 'MAPE, revenue', metric: 'mapeRevenue', value: '', delta: '', direction: 'up' },
+        { label: 'Bias', metric: 'forecastBias', value: '', delta: '', direction: 'down' },
+        {
+          label: 'Weeks within target',
+          metric: 'weeksWithinTarget',
+          value: '',
+          delta: '',
+          direction: 'up',
+        },
       ],
       legend: [
         { label: 'Forecast', color: 'var(--dv2)', series: 0 },
@@ -131,14 +164,20 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
 
     'c4-impact': {
       section: 'Dashboards',
-      title: 'Cumulative effect since cycle start: with ADPA vs baseline',
-      subtitle: 'With ADPA the cycle closed AED 612K ahead of the counterfactual baseline',
+      title: 'Cumulative effect over the selected window: with ADPA vs baseline',
+      subtitle: 'Approved decisions accumulated against the no-ADPA counterfactual',
       back: 'c4',
       stats: [
-        { label: 'Uplift', value: '+AED 612K', delta: '+8.4%', direction: 'up' },
-        { label: 'Baseline', value: 'AED 360K', delta: '', direction: 'down' },
-        { label: 'Markdown cost', value: '-AED 84K', delta: 'planned', direction: 'down' },
-        { label: 'Net effect', value: '+AED 528K', delta: '', direction: 'up' },
+        { label: 'Uplift', metric: 'upliftTotal', value: '', delta: '', direction: 'up' },
+        { label: 'Baseline', metric: 'baselineTotal', value: '', delta: '', direction: 'down' },
+        {
+          label: 'Markdown cost',
+          metric: 'markdownTotal',
+          value: '',
+          delta: 'planned',
+          direction: 'down',
+        },
+        { label: 'Net effect', metric: 'netEffect', value: '', delta: '', direction: 'up' },
       ],
       legend: [
         { label: 'With ADPA', color: 'var(--dv1)', series: 0 },
@@ -159,10 +198,16 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
       subtitle: 'Conversion response per customer segment',
       back: 'c5',
       stats: [
-        { label: 'Segments', value: '4', delta: 'UM approved', direction: 'up' },
-        { label: 'Best responder', value: 'Value-seekers', delta: '+9.4%', direction: 'up' },
-        { label: 'Weakest', value: 'New customers', delta: '+2.1%', direction: 'down' },
-        { label: 'Total reach', value: '98,050', delta: '', direction: 'up' },
+        {
+          label: 'Segments',
+          metric: 'segmentCount',
+          value: '',
+          delta: 'UM approved',
+          direction: 'up',
+        },
+        { label: 'Best responder', metric: 'bestResponder', value: '', delta: '', direction: 'up' },
+        { label: 'Weakest', metric: 'weakestResponder', value: '', delta: '', direction: 'down' },
+        { label: 'Total reach', metric: 'totalReach', value: '', delta: '', direction: 'up' },
       ],
       legend: [],
       columns: ['Segment', 'Reach', 'Conversion', 'Elasticity', 'Δ vs base price'],
@@ -182,13 +227,13 @@ export const CHART_DETAILS_COPY: ChartDetailsCopy = {
     'b2-price': {
       section: 'Recommendations',
       title: 'Price history',
-      subtitle: 'e& vs tracked competitors over the last 8 weeks',
+      subtitle: 'e& vs tracked competitors across the selected window',
       back: 'detail',
       stats: [
-        { label: 'Current', value: 'AED 3,899', delta: '', direction: 'down' },
-        { label: 'Recommended', value: 'AED 3,749', delta: '-3.8%', direction: 'down' },
-        { label: '8-week low', value: 'AED 3,749', delta: '', direction: 'down' },
-        { label: '8-week high', value: 'AED 3,980', delta: '', direction: 'up' },
+        { label: 'Current', metric: '', value: 'AED 3,899', delta: '', direction: 'down' },
+        { label: 'Recommended', metric: '', value: 'AED 3,749', delta: '-3.8%', direction: 'down' },
+        { label: 'Period low', metric: 'priceLow', value: '', delta: '', direction: 'down' },
+        { label: 'Period high', metric: 'priceHigh', value: '', delta: '', direction: 'up' },
       ],
       legend: [
         { label: 'e&', color: 'var(--dv1)', series: 0 },

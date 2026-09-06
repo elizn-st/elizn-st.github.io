@@ -10,6 +10,8 @@ import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
 import { asChartDetailKey } from './keys';
 import { buildChartDetails } from './definitions';
 import { usePortalData } from '@/state/DataContext';
+import { useDashboardRange } from '@/state/RangeContext';
+import { isRangeId } from '@/data/ranges';
 
 export const chartDetailMeta = ({ chartKey, chartDetails }: ScreenMetaInput): ScreenMeta => {
   const chart = chartDetails.copy.charts[chartKey];
@@ -21,9 +23,13 @@ export function ChartDetailScreen() {
   const chartKey = asChartDetailKey(param);
   const { series, chartDetails } = usePortalData();
   const copy = chartDetails.copy;
+  // Shared with the boards, so expanding a chart keeps the window it was
+  // showing rather than resetting to the default.
+  const { chosen, choose } = useDashboardRange();
+  const range = chosen ?? copy.defaultRange;
   const definition = useMemo(
-    () => buildChartDetails(series, copy)[chartKey],
-    [series, copy, chartKey],
+    () => buildChartDetails(series, copy, range)[chartKey],
+    [series, copy, range, chartKey],
   );
 
   const columns: TableColumn[] = definition.columns.map((header, index) => ({
@@ -56,7 +62,14 @@ export function ChartDetailScreen() {
           <p className="page-sub">{definition.subtitle}</p>
         </div>
         <div className="dash-actions">
-          <Segmented options={copy.rangeOptions} defaultValue={copy.defaultRange} />
+          <Segmented
+            items={copy.rangeOptions}
+            defaultValue={copy.defaultRange}
+            value={range}
+            onChange={(next) => {
+              if (isRangeId(next)) choose(next);
+            }}
+          />
           <ToastButton className="btn" message={copy.exportMessage}>
             <Icon name={copy.exportIcon} /> {copy.exportLabel}
           </ToastButton>

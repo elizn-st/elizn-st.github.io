@@ -8,6 +8,9 @@ import { ComboChart } from '@/components/charts/ComboChart';
 import { GroupedBarChart } from '@/components/charts/GroupedBarChart';
 import { BarChart } from '@/components/charts/BarChart';
 import type { SeriesDoc } from '@/repositories/analytics';
+import { categoryPrices, impactCurves, segmentBars, windowLabels } from '@/data/boardMetrics';
+import { windowOf, type RangeId } from '@/data/ranges';
+import { chartStats } from '@/data/chartMetrics';
 import type { ChartDetailCopy, ChartDetailsCopy, ChartStatSpec } from '@/data/chartDetails';
 import { CHART_DETAIL_KEYS, type ChartDetailKey } from './keys';
 
@@ -41,14 +44,23 @@ const colorOf = (copy: ChartDetailCopy, index: number) => copy.legend[index]?.co
  * How each chart is drawn. This is code, not content: it names components and
  * threads the numbers from `analytics/series` through formatters.
  */
-type Renderer = (series: SeriesDoc, copy: ChartDetailCopy, hidden: HiddenSeries) => ReactNode;
+type Renderer = (
+  series: SeriesDoc,
+  copy: ChartDetailCopy,
+  hidden: HiddenSeries,
+  range: RangeId,
+) => ReactNode;
 
 const RENDERERS: Record<ChartDetailKey, Renderer> = {
-  'c1-combo': (_series, _copy, hidden) => <ComboChart hiddenSeries={hidden} />,
-  'c2-grouped': (_series, _copy, hidden) => <GroupedBarChart hiddenSeries={hidden} />,
-  'c3-forecast': (series, copy, hidden) => (
+  'c1-combo': (series, _copy, hidden, range) => (
+    <ComboChart weeks={windowOf(series.comboWeeks, range)} hiddenSeries={hidden} />
+  ),
+  'c2-grouped': (series, _copy, hidden, range) => (
+    <GroupedBarChart rows={categoryPrices(series, range)} hiddenSeries={hidden} />
+  ),
+  'c3-forecast': (series, copy, hidden, range) => (
     <LineChart
-      labels={series.weekLabels}
+      labels={windowLabels(series, range)}
       format={asUnits}
       height={260}
       hiddenSeries={hidden}
@@ -56,20 +68,20 @@ const RENDERERS: Record<ChartDetailKey, Renderer> = {
         {
           name: copy.legend[0]?.label ?? '',
           color: colorOf(copy, 0),
-          data: series.forecastSeries.forecast,
+          data: windowOf(series.forecastSeries.forecast, range),
         },
         {
           name: copy.legend[1]?.label ?? '',
           color: colorOf(copy, 1),
           area: true,
-          data: series.forecastSeries.actual,
+          data: windowOf(series.forecastSeries.actual, range),
         },
       ]}
     />
   ),
-  'c4-impact': (series, copy, hidden) => (
+  'c4-impact': (series, copy, hidden, range) => (
     <LineChart
-      labels={series.weekLabels}
+      labels={windowLabels(series, range)}
       format={asThousands}
       height={260}
       hiddenSeries={hidden}
@@ -78,20 +90,22 @@ const RENDERERS: Record<ChartDetailKey, Renderer> = {
           name: copy.legend[0]?.label ?? '',
           color: colorOf(copy, 0),
           area: true,
-          data: series.impactSeries.withAdpa,
+          data: impactCurves(series, range).withAdpa,
         },
         {
           name: copy.legend[1]?.label ?? '',
           color: colorOf(copy, 1),
-          data: series.impactSeries.baseline,
+          data: impactCurves(series, range).baseline,
         },
       ]}
     />
   ),
-  'c5-elasticity': (series) => <BarChart items={series.elasticityBars} />,
-  'b2-price': (series, copy, hidden) => (
+  'c5-elasticity': (series, _copy, _hidden, range) => (
+    <BarChart items={segmentBars(series, range)} />
+  ),
+  'b2-price': (series, copy, hidden, range) => (
     <LineChart
-      labels={series.weekLabels}
+      labels={windowLabels(series, range)}
       format={asMoney}
       height={260}
       hiddenSeries={hidden}
@@ -100,17 +114,17 @@ const RENDERERS: Record<ChartDetailKey, Renderer> = {
           name: copy.legend[0]?.label ?? '',
           color: colorOf(copy, 0),
           area: true,
-          data: series.priceHistory.eand,
+          data: windowOf(series.priceHistory.eand, range),
         },
         {
           name: copy.legend[1]?.label ?? '',
           color: colorOf(copy, 1),
-          data: series.priceHistory.competitorA,
+          data: windowOf(series.priceHistory.competitorA, range),
         },
         {
           name: copy.legend[2]?.label ?? '',
           color: colorOf(copy, 2),
-          data: series.priceHistory.competitorB,
+          data: windowOf(series.priceHistory.competitorB, range),
         },
       ]}
     />
@@ -121,19 +135,19 @@ const RENDERERS: Record<ChartDetailKey, Renderer> = {
  * How each table is computed from the series. A chart with no builder uses the
  * authored rows in its copy document instead.
  */
-type RowBuilder = (series: SeriesDoc) => readonly (readonly (string | number)[])[];
+type RowBuilder = (series: SeriesDoc, range: RangeId) => readonly (readonly (string | number)[])[];
 
 const ROW_BUILDERS: Partial<Record<ChartDetailKey, RowBuilder>> = {
-  'c1-combo': (series) =>
-    series.comboWeeks.map((week) => [
+  'c1-combo': (series, range) =>
+    windowOf(series.comboWeeks, range).map((week) => [
       week.week,
       week.approved,
       week.rejected,
       `${((week.approved / (week.approved + week.rejected)) * 100).toFixed(1)}%`,
       week.revenue,
     ]),
-  'c2-grouped': (series) =>
-    series.categoryPrices.map((row) => [
+  'c2-grouped': (series, range) =>
+    categoryPrices(series, range).map((row) => [
       row.category,
       aed(row.eand),
       aed(row.competitorA),
@@ -141,10 +155,12 @@ const ROW_BUILDERS: Partial<Record<ChartDetailKey, RowBuilder>> = {
       gapPct(row.eand, row.competitorA),
       gapPct(row.eand, row.competitorB),
     ]),
-  'c3-forecast': (series) =>
-    series.weekLabels.map((week, index) => {
-      const forecast = series.forecastSeries.forecast[index];
-      const actual = series.forecastSeries.actual[index];
+  'c3-forecast': (series, range) => {
+    const forecasts = windowOf(series.forecastSeries.forecast, range);
+    const actuals = windowOf(series.forecastSeries.actual, range);
+    return windowLabels(series, range).map((week, index) => {
+      const forecast = forecasts[index];
+      const actual = actuals[index];
       return [
         week,
         forecast.toLocaleString(),
@@ -152,26 +168,34 @@ const ROW_BUILDERS: Partial<Record<ChartDetailKey, RowBuilder>> = {
         signedWhole(actual - forecast),
         signedRatio(actual - forecast, forecast),
       ];
-    }),
-  'c4-impact': (series) =>
-    series.impactSeries.withAdpa.map((value, index) => {
-      const baseline = series.impactSeries.baseline[index];
+    });
+  },
+  'c4-impact': (series, range) => {
+    const labels = windowLabels(series, range);
+    const curves = impactCurves(series, range);
+    return curves.withAdpa.map((value, index) => {
+      const baseline = curves.baseline[index];
       return [
-        `W${index + 1}`,
-        `AED ${value}K`,
-        `AED ${baseline}K`,
-        `+AED ${value - baseline}K`,
-        `+AED ${value - baseline}K`,
+        labels[index] ?? '',
+        `AED ${Math.round(value)}K`,
+        `AED ${Math.round(baseline)}K`,
+        `+AED ${Math.round(value - baseline)}K`,
+        signedRatio(value - baseline, baseline),
       ];
-    }),
-  'b2-price': (series) =>
-    series.priceHistory.eand.map((value, index) => [
-      `W${index + 1}`,
+    });
+  },
+  'b2-price': (series, range) => {
+    const labels = windowLabels(series, range);
+    const rivalA = windowOf(series.priceHistory.competitorA, range);
+    const rivalB = windowOf(series.priceHistory.competitorB, range);
+    return windowOf(series.priceHistory.eand, range).map((value, index) => [
+      labels[index] ?? '',
       aed(value),
-      aed(series.priceHistory.competitorA[index]),
-      aed(series.priceHistory.competitorB[index]),
-      gapPct(value, series.priceHistory.competitorA[index]),
-    ]),
+      aed(rivalA[index]),
+      aed(rivalB[index]),
+      gapPct(value, rivalA[index]),
+    ]);
+  },
 };
 
 /**
@@ -181,6 +205,7 @@ const ROW_BUILDERS: Partial<Record<ChartDetailKey, RowBuilder>> = {
 export const buildChartDetails = (
   series: SeriesDoc,
   copy: ChartDetailsCopy,
+  range: RangeId,
 ): Record<ChartDetailKey, ChartDetailDefinition> => {
   const built = {} as Record<ChartDetailKey, ChartDetailDefinition>;
   for (const key of CHART_DETAIL_KEYS) {
@@ -191,12 +216,12 @@ export const buildChartDetails = (
       title: chartCopy.title,
       subtitle: chartCopy.subtitle,
       back: chartCopy.back,
-      stats: chartCopy.stats,
+      stats: chartStats(chartCopy.stats, series, range),
       legend: chartCopy.legend,
       columns: chartCopy.columns,
-      rows: build ? build(series) : chartCopy.rows,
+      rows: build ? build(series, range) : chartCopy.rows,
       notes: chartCopy.notes,
-      chart: (hidden) => RENDERERS[key](series, chartCopy, hidden),
+      chart: (hidden) => RENDERERS[key](series, chartCopy, hidden, range),
     };
   }
   return built;

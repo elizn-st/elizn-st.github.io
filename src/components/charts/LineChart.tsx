@@ -39,8 +39,14 @@ export function LineChart({
   const all = series.flatMap((s) => s.data);
   const min = Math.min(...all);
   const max = Math.max(...all);
-  const low = min - (max - min) * 0.15;
-  const high = max + (max - min) * 0.15;
+  // A single week puts every series on one value, and a zero-height band would
+  // divide by zero in `y`. Give it a band proportional to the value instead.
+  const spread = max - min || Math.abs(max) * 0.1 || 1;
+  const padded = min - spread * 0.15;
+  // Cumulative money and unit counts never go below zero, so a padded floor
+  // that does was labelling ticks like "AED -90K" under a rising curve.
+  const low = min >= 0 && padded < 0 ? 0 : padded;
+  const high = max + spread * 0.15;
 
   const ticks = TICKS.map((step) => {
     const value = low + (high - low) * (step / 3);
@@ -58,7 +64,11 @@ export function LineChart({
   const innerWidth = width - padLeft - PAD_RIGHT;
   const innerHeight = height - PAD_TOP - PAD_BOTTOM;
 
-  const x = (index: number) => padLeft + (index / (labels.length - 1)) * innerWidth;
+  // One label has no gaps to divide across, so it sits in the middle.
+  const x = (index: number) =>
+    labels.length < 2
+      ? padLeft + innerWidth / 2
+      : padLeft + (index / (labels.length - 1)) * innerWidth;
   const y = (value: number) => PAD_TOP + innerHeight - ((value - low) / (high - low)) * innerHeight;
 
   return (

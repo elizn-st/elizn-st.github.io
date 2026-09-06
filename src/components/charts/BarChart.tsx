@@ -1,5 +1,5 @@
 import { Fragment, useRef } from 'react';
-import type { ElasticityBar } from '@/data/series';
+import type { SegmentBar } from '@/data/boardMetrics';
 import { layoutCategoryLabels, useChartViewBoxWidth } from './geometry';
 import { CategoryLabel } from './CategoryLabel';
 
@@ -10,7 +10,7 @@ const PAD_TOP = 22;
 const BASE_PAD_BOTTOM = 18;
 
 /** Single-series bars with the value printed above each column. */
-export function BarChart({ items }: { readonly items: readonly ElasticityBar[] }) {
+export function BarChart({ items }: { readonly items: readonly SegmentBar[] }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const width = useChartViewBoxWidth(svgRef);
 

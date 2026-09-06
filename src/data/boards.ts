@@ -1,5 +1,7 @@
-import type { ChartCopy, KpiSpec, LegendSpec, NoticeSpec } from './ui';
+import type { ChartCopy, LegendSpec, NoticeSpec } from './ui';
 import type { DashboardTabId } from './navigation';
+import type { BoardKpiSpec } from './boardMetrics';
+import type { RangeId, RangeOption } from './ranges';
 
 /**
  * Copy for the five dashboard boards, keyed by tab id.
@@ -19,7 +21,7 @@ export type { NoticeSpec };
 export interface BoardCopy {
   readonly title: string;
   readonly subtitle: string;
-  readonly kpis: readonly KpiSpec[];
+  readonly kpis: readonly BoardKpiSpec[];
   readonly chart: BoardChart;
   readonly columns: readonly string[];
   /** Section headings used only by Competitor intelligence. */
@@ -34,13 +36,13 @@ export interface BoardsCopy {
   readonly exportLabel: string;
   readonly exportIcon: string;
   readonly exportMessage: string;
-  readonly rangeOptions: readonly string[];
-  readonly defaultRange: string;
+  readonly rangeOptions: readonly RangeOption[];
+  readonly defaultRange: RangeId;
   readonly expandLabel: string;
   readonly boards: Readonly<Record<DashboardTabId, BoardCopy>>;
 }
 
-const noKpis: readonly KpiSpec[] = [];
+const noKpis: readonly BoardKpiSpec[] = [];
 const noColumns: readonly string[] = [];
 const noSections: readonly string[] = [];
 const noNotices: readonly NoticeSpec[] = [];
@@ -50,7 +52,12 @@ export const BOARDS_COPY: BoardsCopy = {
   exportLabel: 'Export',
   exportIcon: 'export',
   exportMessage: 'Export started',
-  rangeOptions: ['1W', '4W', '8W', 'ALL'],
+  rangeOptions: [
+    { id: '1W', label: '1W' },
+    { id: '4W', label: '4W' },
+    { id: '8W', label: '8W' },
+    { id: 'ALL', label: 'ALL' },
+  ],
   defaultRange: '8W',
   expandLabel: 'Open',
   boards: {
@@ -58,44 +65,15 @@ export const BOARDS_COPY: BoardsCopy = {
       title: 'Pricing performance',
       subtitle: 'Deviation, volume and revenue · approved decisions impact',
       kpis: [
-        {
-          label: 'Avg price vs baseline',
-          value: '-4.1%',
-          delta: '-0.5pp',
-          direction: 'down',
-          tone: 'neg',
-          graph: false,
-        },
-        {
-          label: 'Sales volume',
-          value: '+7.8%',
-          delta: '+1.2pp',
-          direction: 'up',
-          tone: 'pos',
-          graph: false,
-        },
-        {
-          label: 'Revenue',
-          value: '+3.4%',
-          delta: '+0.4pp',
-          direction: 'up',
-          tone: 'pos',
-          graph: false,
-        },
-        {
-          label: 'Margin',
-          value: '-0.6%',
-          delta: '-0.2pp',
-          direction: 'down',
-          tone: 'neg',
-          graph: false,
-        },
+        { label: 'Avg price vs baseline', metric: 'priceVsBaseline', note: '', graph: false },
+        { label: 'Sales volume', metric: 'volume', note: '', graph: false },
+        { label: 'Revenue', metric: 'revenue', note: '', graph: false },
+        { label: 'Margin', metric: 'margin', note: '', graph: false },
       ],
       chart: {
         copy: {
           title: 'Approved decisions vs actual revenue',
-          subtitle:
-            'Approval volume rose 48% over 8 weeks while revenue climbed from AED 410K to 495K',
+          subtitle: 'Approval and rejection volume against realised revenue, week by week',
         },
         legend: [
           { label: 'Rejected', color: 'var(--dv-rej)', series: 1 },
@@ -116,8 +94,7 @@ export const BOARDS_COPY: BoardsCopy = {
       chart: {
         copy: {
           title: 'e& price vs competitors by category',
-          subtitle:
-            'e& holds a price premium in Smartphones and Tablets; near parity in Accessories and Wearables',
+          subtitle: 'Average price per retailer across the selected window',
         },
         legend: [
           { label: 'e&', color: '#950124', series: 0 },
@@ -135,23 +112,9 @@ export const BOARDS_COPY: BoardsCopy = {
       title: 'Forecast accuracy',
       subtitle: 'MAPE and bias metrics for demand and revenue models',
       kpis: [
-        { label: 'MAPE (demand)', value: '6.8%', delta: '', direction: '', tone: '', graph: false },
-        {
-          label: 'MAPE (revenue)',
-          value: '5.1%',
-          delta: '',
-          direction: '',
-          tone: '',
-          graph: false,
-        },
-        {
-          label: 'Confidence interval',
-          value: '4.2%',
-          delta: '',
-          direction: '',
-          tone: '',
-          graph: false,
-        },
+        { label: 'MAPE (demand)', metric: 'mapeDemand', note: '', graph: false },
+        { label: 'MAPE (revenue)', metric: 'mapeRevenue', note: '', graph: false },
+        { label: 'Confidence interval', metric: 'confidence', note: '', graph: false },
       ],
       chart: {
         copy: {
@@ -173,43 +136,15 @@ export const BOARDS_COPY: BoardsCopy = {
       title: 'Revenue impact',
       subtitle: 'Cumulative AED uplift vs the no-ADPA baseline',
       kpis: [
-        {
-          label: 'Revenue uplift',
-          value: '+AED 612K',
-          delta: '+8.4%',
-          direction: 'up',
-          tone: 'pos',
-          graph: false,
-        },
-        {
-          label: 'Markdown cost',
-          value: '-AED 84K',
-          delta: 'planned',
-          direction: 'down',
-          tone: 'neg',
-          graph: false,
-        },
-        {
-          label: 'Incremental units',
-          value: '1,240',
-          delta: '+310',
-          direction: 'up',
-          tone: '',
-          graph: false,
-        },
-        {
-          label: 'Margin delta',
-          value: '+2.1%',
-          delta: '+0.3pp',
-          direction: 'up',
-          tone: 'pos',
-          graph: false,
-        },
+        { label: 'Revenue uplift', metric: 'uplift', note: '', graph: false },
+        { label: 'Markdown cost', metric: 'markdown', note: 'planned', graph: false },
+        { label: 'Incremental units', metric: 'incrementalUnits', note: '', graph: false },
+        { label: 'Margin delta', metric: 'marginDelta', note: '', graph: false },
       ],
       chart: {
         copy: {
-          title: 'Cumulative effect since cycle start: with ADPA vs baseline',
-          subtitle: 'With ADPA the cycle closed AED 612K ahead of the counterfactual baseline',
+          title: 'Cumulative effect over the selected window: with ADPA vs baseline',
+          subtitle: 'Approved decisions accumulated against the no-ADPA counterfactual',
         },
         legend: [
           { label: 'With ADPA', color: 'var(--dv1)', series: 0 },

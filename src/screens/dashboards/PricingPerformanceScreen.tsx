@@ -1,5 +1,7 @@
 import { KpiCards } from '@/components/common/KpiCard';
 import { usePortalData } from '@/state/DataContext';
+import { boardKpis, categoryPerformance } from '@/data/boardMetrics';
+import { windowOf } from '@/data/ranges';
 import { ChartCard } from '@/components/common/ChartCard';
 import { ChartHead } from '@/components/common/ChartHead';
 import { ComboChart } from '@/components/charts/ComboChart';
@@ -10,39 +12,47 @@ import { DashboardShell, dashboardMeta } from './DashboardShell';
 export const pricingPerformanceMeta = dashboardMeta('c1');
 
 export function PricingPerformanceScreen() {
-  const { dashboards, boards } = usePortalData();
+  const { series, boards } = usePortalData();
   const board = boards.copy.boards.c1;
-  const rows = dashboards.categoryPerformance.map((row) => ({
-    key: row.category,
-    cells: [
-      { content: row.category },
-      { content: <Delta value={row.priceVsBaseline} /> },
-      { content: <Delta value={row.revenue} /> },
-      { content: row.conversion, className: 'tnum' },
-    ],
-  }));
 
   return (
     <DashboardShell tab="c1">
-      <div className="kpi-row">
-        <KpiCards kpis={board.kpis} />
-      </div>
+      {(range) => {
+        const weeks = windowOf(series.comboWeeks, range);
+        const rows = categoryPerformance(series, range).map((row) => ({
+          key: row.category,
+          cells: [
+            { content: row.category },
+            { content: <Delta value={row.priceVsBaseline} /> },
+            { content: <Delta value={row.revenue} /> },
+            { content: row.conversion, className: 'tnum' },
+          ],
+        }));
 
-      <ChartCard
-        head={
-          <ChartHead
-            title={board.chart.copy.title}
-            subtitle={board.chart.copy.subtitle}
-            padLeft={40}
-            chartKey="c1-combo"
-          />
-        }
-        legend={board.chart.legend}
-      >
-        {(hidden) => <ComboChart hiddenSeries={hidden} />}
-      </ChartCard>
+        return (
+          <>
+            <div className="kpi-row">
+              <KpiCards kpis={boardKpis(board.kpis, range, series)} />
+            </div>
 
-      <Table columns={uniformColumns(board.columns)} rows={rows} />
+            <ChartCard
+              head={
+                <ChartHead
+                  title={board.chart.copy.title}
+                  subtitle={board.chart.copy.subtitle}
+                  padLeft={40}
+                  chartKey="c1-combo"
+                />
+              }
+              legend={board.chart.legend}
+            >
+              {(hidden) => <ComboChart weeks={weeks} hiddenSeries={hidden} />}
+            </ChartCard>
+
+            <Table columns={uniformColumns(board.columns)} rows={rows} />
+          </>
+        );
+      }}
     </DashboardShell>
   );
 }

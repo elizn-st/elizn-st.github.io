@@ -1,5 +1,6 @@
 import { Fragment, useRef } from 'react';
 import { usePortalData } from '@/state/DataContext';
+import type { CategoryPricePoint } from '@/data/boardMetrics';
 import { aed } from '@/lib/format';
 import { EMPTY_HIDDEN, hiddenClass, type HiddenSeries } from './types';
 import { layoutCategoryLabels, useChartViewBoxWidth } from './geometry';
@@ -13,8 +14,11 @@ const BASE_PAD_BOTTOM = 18;
 
 /** e& against both tracked competitors, grouped by category. */
 export function GroupedBarChart({
+  rows,
   hiddenSeries = EMPTY_HIDDEN,
 }: {
+  /** Already averaged across the selected window by the board. */
+  readonly rows: readonly CategoryPricePoint[];
   readonly hiddenSeries?: HiddenSeries;
 }) {
   const { series } = usePortalData();
@@ -23,12 +27,12 @@ export function GroupedBarChart({
   const width = useChartViewBoxWidth(svgRef);
 
   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
-  const group = innerWidth / series.categoryPrices.length;
+  const group = innerWidth / rows.length;
   const barWidth = group * 0.16;
   const gap = barWidth * 0.18;
 
   const labels = layoutCategoryLabels(
-    series.categoryPrices.map((row) => row.category),
+    rows.map((row) => row.category),
     group,
   );
   const innerHeight = HEIGHT - PAD_TOP - BASE_PAD_BOTTOM - labels.extraBottom;
@@ -64,7 +68,7 @@ export function GroupedBarChart({
         </Fragment>
       ))}
 
-      {series.categoryPrices.map((row, index) => {
+      {rows.map((row, index) => {
         const start = PAD_LEFT + group * index + (group - (barWidth * 3 + gap * 2)) / 2;
         const values = [row.eand, row.competitorA, row.competitorB];
         return (

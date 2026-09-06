@@ -1,5 +1,7 @@
 import { KpiCards } from '@/components/common/KpiCard';
 import { usePortalData } from '@/state/DataContext';
+import { boardKpis, windowLabels } from '@/data/boardMetrics';
+import { windowOf } from '@/data/ranges';
 import { ChartCard } from '@/components/common/ChartCard';
 import { ChartHead } from '@/components/common/ChartHead';
 import { LineChart } from '@/components/charts/LineChart';
@@ -17,7 +19,6 @@ const FILLED = [false, true];
 export function ForecastAccuracyScreen() {
   const { dashboards, series, boards } = usePortalData();
   const board = boards.copy.boards.c3;
-  const chartData = [series.forecastSeries.forecast, series.forecastSeries.actual];
   const rows = dashboards.forecastQuality.map((row) => ({
     key: row.category,
     cells: [
@@ -30,38 +31,50 @@ export function ForecastAccuracyScreen() {
 
   return (
     <DashboardShell tab="c3">
-      <div className="kpi-row">
-        <KpiCards kpis={board.kpis} />
-      </div>
+      {(range) => {
+        const labels = windowLabels(series, range);
+        const chartData = [
+          windowOf(series.forecastSeries.forecast, range),
+          windowOf(series.forecastSeries.actual, range),
+        ];
 
-      <ChartCard
-        head={
-          <ChartHead
-            title={board.chart.copy.title}
-            subtitle={board.chart.copy.subtitle}
-            padLeft={40}
-            chartKey="c3-forecast"
-          />
-        }
-        xAxisLabels={series.weekLabels}
-        legend={board.chart.legend}
-      >
-        {(hidden) => (
-          <LineChart
-            labels={series.weekLabels}
-            format={asUnits}
-            hiddenSeries={hidden}
-            series={board.chart.seriesNames.map((name, index) => ({
-              name,
-              color: board.chart.legend[index]?.color ?? '',
-              area: FILLED[index] ?? false,
-              data: chartData[index] ?? [],
-            }))}
-          />
-        )}
-      </ChartCard>
+        return (
+          <>
+            <div className="kpi-row">
+              <KpiCards kpis={boardKpis(board.kpis, range, series)} />
+            </div>
 
-      <Table columns={uniformColumns(board.columns)} rows={rows} />
+            <ChartCard
+              head={
+                <ChartHead
+                  title={board.chart.copy.title}
+                  subtitle={board.chart.copy.subtitle}
+                  padLeft={40}
+                  chartKey="c3-forecast"
+                />
+              }
+              xAxisLabels={labels}
+              legend={board.chart.legend}
+            >
+              {(hidden) => (
+                <LineChart
+                  labels={labels}
+                  format={asUnits}
+                  hiddenSeries={hidden}
+                  series={board.chart.seriesNames.map((name, index) => ({
+                    name,
+                    color: board.chart.legend[index]?.color ?? '',
+                    area: FILLED[index] ?? false,
+                    data: chartData[index] ?? [],
+                  }))}
+                />
+              )}
+            </ChartCard>
+
+            <Table columns={uniformColumns(board.columns)} rows={rows} />
+          </>
+        );
+      }}
     </DashboardShell>
   );
 }
