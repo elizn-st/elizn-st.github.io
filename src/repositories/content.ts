@@ -19,7 +19,13 @@ import type {
   GuardrailBand,
   HistoryPreviewEntry,
 } from '@/data/detail';
-import type { NotificationGroup, NotificationsCopy } from '@/data/notifications';
+import {
+  NOTIFICATION_TAB_IDS,
+  type NotificationGroup,
+  type NotificationTab,
+  type NotificationTabId,
+  type NotificationsCopy,
+} from '@/data/notifications';
 import type { ChatCopy, ChatSession } from '@/data/chat';
 import type {
   DeviceSession,
@@ -228,7 +234,7 @@ export const parseDetail: Parser<DetailDoc> = (f) => ({
 
 export interface NotificationsDoc {
   readonly groups: readonly NotificationGroup[];
-  readonly tabs: readonly string[];
+  readonly tabs: readonly NotificationTab[];
   readonly copy: NotificationsCopy;
 }
 
@@ -244,13 +250,21 @@ export const parseNotifications: Parser<NotificationsDoc> = (f) => ({
       unread: i.boolean('unread'),
     })),
   })),
-  tabs: f.strings('tabs'),
+  tabs: f.objects('tabs', (t) => ({
+    // The id drives the filter, so an unknown one fails here rather than
+    // quietly rendering a tab that matches nothing.
+    id: t.oneOf<NotificationTabId>('id', NOTIFICATION_TAB_IDS),
+    label: t.string('label'),
+  })),
   copy: f.object('copy', (c) => ({
     title: c.string('title'),
-    subtitle: c.string('subtitle'),
+    unreadLabel: c.string('unreadLabel'),
+    totalLabel: c.string('totalLabel'),
     markAllLabel: c.string('markAllLabel'),
     markAllIcon: c.string('markAllIcon'),
     markAllMessage: c.string('markAllMessage'),
+    emptyMessage: c.string('emptyMessage'),
+    emptyIcon: c.string('emptyIcon'),
     closeLabel: c.string('closeLabel'),
   })),
 });

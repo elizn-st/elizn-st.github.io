@@ -88,22 +88,88 @@ export const NOTIFICATION_GROUPS: readonly NotificationGroup[] = [
   },
 ];
 
-export const NOTIFICATION_TABS: readonly string[] = ['All', 'Critical', 'Warnings', 'Updates'];
+/** Runtime list as well as a type, so a Console-edited tab id can be validated. */
+export const NOTIFICATION_TAB_IDS = ['all', 'critical', 'warnings', 'updates'] as const;
+
+export type NotificationTabId = (typeof NOTIFICATION_TAB_IDS)[number];
+
+export interface NotificationTab {
+  readonly id: NotificationTabId;
+  readonly label: string;
+}
+
+export const NOTIFICATION_TABS: readonly NotificationTab[] = [
+  { id: 'all', label: 'All' },
+  { id: 'critical', label: 'Critical' },
+  { id: 'warnings', label: 'Warnings' },
+  { id: 'updates', label: 'Updates' },
+];
+
+export const DEFAULT_NOTIFICATION_TAB: NotificationTabId = 'all';
+
+/**
+ * Which severities each tab admits, `null` meaning "no restriction".
+ *
+ * The grouping is logic, not copy: renaming "Updates" in the Console must not
+ * silently change what the tab shows, which is why the tab carries an id and
+ * only its label is editable. `all` is a null rather than a copy of SEVERITIES
+ * so that a new severity joins it without an edit here -- and so that this file
+ * keeps importing `Severity` as a type only, which is what lets `npm run seed`
+ * load it under Node's extensionless resolution.
+ */
+const TAB_SEVERITIES: Readonly<Record<NotificationTabId, readonly Severity[] | null>> = {
+  all: null,
+  critical: ['critical'],
+  warnings: ['warning'],
+  updates: ['info', 'success'],
+};
+
+export const matchesTab = (item: NotificationItem, tab: NotificationTabId): boolean => {
+  const allowed = TAB_SEVERITIES[tab];
+  return allowed === null || allowed.includes(item.severity);
+};
+
+/**
+ * The groups a tab shows, in their authored order.
+ *
+ * A day that has nothing for the selected tab drops out with its label, rather
+ * than leaving an "Earlier" heading standing over nothing.
+ */
+export const filterGroups = (
+  groups: readonly NotificationGroup[],
+  tab: NotificationTabId,
+): readonly NotificationGroup[] =>
+  groups
+    .map((group) => ({ ...group, items: group.items.filter((item) => matchesTab(item, tab)) }))
+    .filter((group) => group.items.length > 0);
+
+export const countItems = (groups: readonly NotificationGroup[]): number =>
+  groups.reduce((total, group) => total + group.items.length, 0);
+
+export const countUnread = (groups: readonly NotificationGroup[]): number =>
+  groups.reduce((total, group) => total + group.items.filter((item) => item.unread).length, 0);
 
 export interface NotificationsCopy {
   readonly title: string;
-  readonly subtitle: string;
+  /** Subtitle reads `${n} ${unreadLabel} · ${m} ${totalLabel}`, both counted. */
+  readonly unreadLabel: string;
+  readonly totalLabel: string;
   readonly markAllLabel: string;
   readonly markAllIcon: string;
   readonly markAllMessage: string;
+  readonly emptyMessage: string;
+  readonly emptyIcon: string;
   readonly closeLabel: string;
 }
 
 export const NOTIFICATIONS_COPY: NotificationsCopy = {
   title: 'Notifications',
-  subtitle: '3 unread · 7 total',
+  unreadLabel: 'unread',
+  totalLabel: 'total',
   markAllLabel: 'Mark all read',
   markAllIcon: 'checks',
   markAllMessage: 'All notifications marked as read',
+  emptyMessage: 'Nothing in this tab right now.',
+  emptyIcon: 'check-circle',
   closeLabel: 'Close',
 };

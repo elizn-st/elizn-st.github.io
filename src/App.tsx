@@ -4,6 +4,7 @@ import { OverlayProvider } from '@/state/OverlayContext';
 import { AuthProvider } from '@/state/AuthContext';
 import { AuthGate } from '@/components/auth/AuthGate';
 import { DataProvider } from '@/state/DataContext';
+import { NotificationsProvider } from '@/state/NotificationsContext';
 import { AppShell } from '@/components/layout/AppShell';
 
 export default function App() {
@@ -16,7 +17,10 @@ export default function App() {
           <AuthProvider>
             <AuthGate>
               <DataProvider>
-                <AppShell />
+                {/* Inside DataProvider so the read flag resets with the session. */}
+                <NotificationsProvider>
+                  <AppShell />
+                </NotificationsProvider>
               </DataProvider>
             </AuthGate>
           </AuthProvider>

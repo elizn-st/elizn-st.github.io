@@ -3,6 +3,8 @@ import { cx } from '@/lib/cx';
 import { useRouter } from '@/routing/RouterContext';
 import { useOverlays } from '@/state/OverlayContext';
 import { usePortalData } from '@/state/DataContext';
+import { useNotificationsRead } from '@/state/NotificationsContext';
+import { countUnread } from '@/data/notifications';
 import { useInterval } from '@/hooks/useInterval';
 import { Icon } from '@/components/common/Icon';
 import { GoLink } from '@/components/common/GoButton';
@@ -21,12 +23,17 @@ const BELL_PULSE_INTERVAL_MS = 12_000;
 export function Topbar({ section, page, navOpen, onToggleNav }: TopbarProps) {
   const { navigate, back } = useRouter();
   const { openSearch, openNotifications } = useOverlays();
-  const { navigation } = usePortalData();
+  const { navigation, notifications } = usePortalData();
+  const { allRead } = useNotificationsRead();
   const copy = navigation.copy;
   /** Bumping the key remounts the dot, which restarts its CSS animation. */
   const [pulseKey, setPulseKey] = useState(0);
 
   useInterval(() => setPulseKey((key) => key + 1), BELL_PULSE_INTERVAL_MS);
+
+  // The dot is an unread badge, so marking everything read has to clear it --
+  // otherwise the bell keeps advertising notifications the drawer calls read.
+  const unread = allRead ? 0 : countUnread(notifications.groups);
 
   return (
     <header className="topbar">
@@ -70,7 +77,9 @@ export function Topbar({ section, page, navOpen, onToggleNav }: TopbarProps) {
           }}
         >
           <Icon name="bell" />
-          <span key={pulseKey} className={cx('indicator', pulseKey > 0 && 'is-pulsing')} />
+          {unread > 0 && (
+            <span key={pulseKey} className={cx('indicator', pulseKey > 0 && 'is-pulsing')} />
+          )}
         </button>
       </div>
     </header>
