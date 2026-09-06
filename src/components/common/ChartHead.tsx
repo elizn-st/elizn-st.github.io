@@ -1,5 +1,4 @@
 import { useRouter } from '@/routing/RouterContext';
-import { useChartFocus } from '@/state/ChartFocusContext';
 import { usePortalData } from '@/state/DataContext';
 import type { ChartDetailKey } from '@/screens/chartDetail/keys';
 import { Icon } from './Icon';
@@ -26,7 +25,6 @@ export function ChartHead({
   onExpand,
 }: ChartHeadProps) {
   const { navigate } = useRouter();
-  const { focusChart } = useChartFocus();
   const { chrome } = usePortalData();
 
   const handleExpand = () => {
@@ -35,8 +33,8 @@ export function ChartHead({
       return;
     }
     if (!chartKey) return;
-    focusChart(chartKey);
-    navigate('chartd');
+    // The key travels in the hash, so the opened chart is what the address says.
+    navigate('chartd', chartKey);
   };
 
   return (

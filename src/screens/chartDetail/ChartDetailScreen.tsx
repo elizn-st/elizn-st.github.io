@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useChartFocus } from '@/state/ChartFocusContext';
 import { useRouter } from '@/routing/RouterContext';
 import { Icon } from '@/components/common/Icon';
 import { ToastButton } from '@/components/common/ToastButton';
@@ -8,6 +7,7 @@ import { KpiCard } from '@/components/common/KpiCard';
 import { ChartCard } from '@/components/common/ChartCard';
 import { Table, type TableColumn } from '@/components/common/Table';
 import type { ScreenMeta, ScreenMetaInput } from '@/routing/screens';
+import { asChartDetailKey } from './keys';
 import { buildChartDetails } from './definitions';
 import { usePortalData } from '@/state/DataContext';
 
@@ -17,8 +17,8 @@ export const chartDetailMeta = ({ chartKey, chartDetails }: ScreenMetaInput): Sc
 };
 
 export function ChartDetailScreen() {
-  const { chartKey } = useChartFocus();
-  const { navigate } = useRouter();
+  const { navigate, param } = useRouter();
+  const chartKey = asChartDetailKey(param);
   const { series, chartDetails } = usePortalData();
   const copy = chartDetails.copy;
   const definition = useMemo(

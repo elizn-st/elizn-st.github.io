@@ -8,7 +8,7 @@ import { useRouter } from '@/routing/RouterContext';
 import type { RouteId } from '@/routing/routeIds';
 import { isScreenId, SCREENS } from '@/routing/screenRegistry';
 import { resolveMeta, type ScreenMeta, type ScreenMetaInput } from '@/routing/screens';
-import { useChartFocus } from '@/state/ChartFocusContext';
+import { asChartDetailKey } from '@/screens/chartDetail/keys';
 import { useOverlays } from '@/state/OverlayContext';
 import { usePortalData } from '@/state/DataContext';
 import { NotFoundScreen, notFoundMeta } from '@/screens/NotFoundScreen';
@@ -23,8 +23,8 @@ import { ChatSidebar } from './ChatSidebar';
 const TEXT_ENTRY_TAGS = /input|textarea|select/i;
 
 export function AppShell() {
-  const { route } = useRouter();
-  const { chartKey } = useChartFocus();
+  const { route, param } = useRouter();
+  const chartKey = asChartDetailKey(param);
   const { openSearch, closeAll } = useOverlays();
   const { series, navigation, boards, chartDetails } = usePortalData();
 
@@ -53,7 +53,7 @@ export function AppShell() {
     viewRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: scrollBehavior });
     setNavOpen(false);
-  }, [route]);
+  }, [route, param]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

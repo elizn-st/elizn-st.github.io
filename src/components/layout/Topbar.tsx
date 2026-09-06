@@ -5,6 +5,7 @@ import { useOverlays } from '@/state/OverlayContext';
 import { usePortalData } from '@/state/DataContext';
 import { useInterval } from '@/hooks/useInterval';
 import { Icon } from '@/components/common/Icon';
+import { GoLink } from '@/components/common/GoButton';
 import { Breadcrumb } from './Breadcrumb';
 
 export interface TopbarProps {
@@ -38,10 +39,10 @@ export function Topbar({ section, page, navOpen, onToggleNav }: TopbarProps) {
         >
           <Icon name="list" />
         </button>
-        <a className="logo" href="#/home">
+        <GoLink to="home" className="logo">
           <span className="logo-mark">{copy.logoMark}</span>
           <span className="logo-word">{copy.logoWord}</span>
-        </a>
+        </GoLink>
         <div className="crumb-wrap">
           <button className="back-btn" aria-label={copy.backLabel} onClick={back}>
             <Icon name="arrow-left" />

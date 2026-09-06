@@ -27,7 +27,28 @@ export type RouteId = (typeof ROUTE_IDS)[number];
 
 export const DEFAULT_ROUTE: ScreenId = 'home';
 
-/** `#/queue` → `queue`; an empty or bare hash falls back to Home. */
-export const parseHash = (hash: string): string => hash.replace(/^#\/?/, '') || DEFAULT_ROUTE;
+/**
+ * A parsed hash.
+ *
+ * The optional second segment is what a screen needs when it renders one of
+ * several records -- `#/chartd/c5-elasticity` rather than `#/chartd` plus a
+ * remembered selection, so the address survives a reload and a paste.
+ */
+export interface RouteLocation {
+  /** Raw slug -- may not resolve to a screen. */
+  readonly route: string;
+  /** The second segment, or `null` when the hash carries none. */
+  readonly param: string | null;
+}
 
-export const toHash = (route: RouteId): string => `#/${route}`;
+/** `#/chartd/c5-elasticity` -> `{ chartd, c5-elasticity }`; a bare hash is Home. */
+export const parseHash = (hash: string): RouteLocation => {
+  const [route = '', param = ''] = hash.replace(/^#\/?/, '').split('/');
+  return { route: route || DEFAULT_ROUTE, param: param || null };
+};
+
+export const toHash = (route: RouteId, param?: string): string =>
+  param ? `#/${route}/${param}` : `#/${route}`;
+
+export const sameLocation = (a: RouteLocation, b: RouteLocation): boolean =>
+  a.route === b.route && a.param === b.param;

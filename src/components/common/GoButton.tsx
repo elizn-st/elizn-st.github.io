@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import { useRouter } from '@/routing/RouterContext';
-import type { RouteId } from '@/routing/routeIds';
+import { toHash, type RouteId } from '@/routing/routeIds';
 
 export interface GoButtonProps {
   readonly to: RouteId;
@@ -55,21 +55,25 @@ export function GoButton({
 /** Anchor variant, for the SKU links inside the review queue. */
 export function GoLink({
   to,
+  param,
   className,
   children,
 }: {
   readonly to: RouteId;
+  readonly param?: string;
   readonly className?: string;
   readonly children: ReactNode;
 }) {
   const { navigate } = useRouter();
   return (
     <a
-      href={`#/${to}`}
+      href={toHash(to, param)}
       className={className}
       onClick={(event) => {
+        // Let the router record the step instead of the browser, so the entry
+        // carries a depth and the back arrow can tell in-app from arrived-here.
         event.preventDefault();
-        navigate(to);
+        navigate(to, param);
       }}
     >
       {children}
