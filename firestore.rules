@@ -44,8 +44,8 @@ service cloud.firestore {
     }
 
     // ---- org-wide data -------------------------------------------------------
-    // `recommendations`, `decisions`, `rules` and `reports` are one document
-    // per row, so they can be queried and edited individually. `analytics`,
+    // `recommendations`, `decisions`, `rules`, `reports` and `people` are one
+    // document per row, so they can be queried and edited individually. `analytics`,
     // `content` and `config` hold documents that are always read whole -- one
     // per chart series or per screen's copy -- because Firestore bills per
     // document read.
@@ -78,6 +78,14 @@ service cloud.firestore {
     // change -- which reports reach them -- lives in their own user document
     // below, and is the only write the portal makes.
     match /reports/{reportId} {
+      allow read: if hasPortalAccess();
+      allow write: if isAdmin();
+    }
+
+    // The access directory. It is a readable mirror of who holds which custom
+    // claim -- the claims themselves live in the ID token, which is what the
+    // rules above actually evaluate. A reviewer reads it; only Admin writes it.
+    match /people/{personId} {
       allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }

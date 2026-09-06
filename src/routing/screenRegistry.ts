@@ -9,6 +9,7 @@ import { HistoryScreen, historyMeta } from '@/screens/HistoryScreen';
 import { ProfileScreen, profileMeta } from '@/screens/ProfileScreen';
 import { RulesScreen, rulesMeta } from '@/screens/RulesScreen';
 import { ReportsScreen, reportsMeta } from '@/screens/ReportsScreen';
+import { AdminScreen, adminMeta } from '@/screens/AdminScreen';
 import { ChartDetailScreen, chartDetailMeta } from '@/screens/chartDetail/ChartDetailScreen';
 import {
   PricingPerformanceScreen,
@@ -40,6 +41,7 @@ export const SCREENS: ScreenRegistry = {
   profile: { component: ProfileScreen, meta: profileMeta },
   rules: { component: RulesScreen, meta: rulesMeta },
   reports: { component: ReportsScreen, meta: reportsMeta },
+  admin: { component: AdminScreen, meta: adminMeta },
   c1: { component: PricingPerformanceScreen, meta: pricingPerformanceMeta },
   c2: { component: CompetitorIntelligenceScreen, meta: competitorIntelligenceMeta },
   c3: { component: ForecastAccuracyScreen, meta: forecastAccuracyMeta },

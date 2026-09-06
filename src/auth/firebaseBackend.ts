@@ -5,8 +5,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AuthError } from './types';
-import type { User } from 'firebase/auth';
-import type { AuthBackend, AuthErrorCode, AuthUser } from './types';
+import type { IdTokenResult, User } from 'firebase/auth';
+import type { AuthBackend, AuthClaims, AuthErrorCode, AuthUser } from './types';
 
 /**
  * Email/password sign-in against Firebase Auth. Session persistence, token
@@ -28,12 +28,19 @@ const nameFromEmail = (email: string): string =>
  * password unless someone calls updateProfile, so the local part of the address
  * stands in until a profile document supplies a real name.
  */
-const toAuthUser = (user: User): AuthUser => {
+/** A claim is only true when the token says so; anything else is no access. */
+const toClaims = (token: IdTokenResult): AuthClaims => ({
+  portalAccess: token.claims.portalAccess === true,
+  admin: token.claims.admin === true,
+});
+
+const toAuthUser = (user: User, token?: IdTokenResult): AuthUser => {
   const email = user.email ?? '';
   return {
     uid: user.uid,
     email,
     displayName: user.displayName?.trim() || (email ? nameFromEmail(email) : user.uid),
+    claims: token ? toClaims(token) : null,
   };
 };
 
@@ -92,10 +99,13 @@ export const firebaseAuthBackend: AuthBackend = {
         onChange(toAuthUser(user));
         if (refreshed.has(user.uid)) return;
         refreshed.add(user.uid);
-        void user
-          .reload()
-          .then(() => onChange(toAuthUser(user)))
-          .catch((cause: unknown) => console.warn('[auth] could not refresh profile', cause));
+        // The token is read alongside the profile refresh so the claims arrive
+        // in the same second pass. `getIdTokenResult` without a forced refresh
+        // returns the cached token -- the very one the security rules are
+        // evaluating -- rather than asking the server for a new one.
+        void Promise.all([user.reload(), user.getIdTokenResult()])
+          .then(([, token]) => onChange(toAuthUser(user, token)))
+          .catch((cause: unknown) => console.warn('[auth] could not refresh session', cause));
       },
       (cause) => {
         console.error('[auth] auth state listener failed', cause);

@@ -13,7 +13,7 @@ export const NAV_ITEMS: readonly NavEntry[] = [
   { id: 'queue', label: 'Recommendations', icon: 'list-checks' },
   { id: 'rules', label: 'Rules', icon: 'sliders-horizontal' },
   { id: 'reports', label: 'Reports', icon: 'file-text' },
-  { id: 'admin', label: 'Admin', icon: 'user-gear', disabled: true },
+  { id: 'admin', label: 'Admin', icon: 'user-gear' },
 ];
 
 /** Runtime list as well as a type, so a Console-edited tab id can be validated. */
@@ -55,6 +55,7 @@ export const BREADCRUMB_IDS = [
   'profile',
   'rules',
   'reports',
+  'admin',
 ] as const;
 
 export type BreadcrumbId = (typeof BREADCRUMB_IDS)[number];
@@ -108,6 +109,7 @@ export const NAVIGATION_COPY: NavigationCopy = {
     profile: { section: '', page: 'Profile' },
     rules: { section: '', page: 'Rules' },
     reports: { section: '', page: 'Reports' },
+    admin: { section: '', page: 'Admin' },
   },
   notFound: {
     page: 'Screen not found',

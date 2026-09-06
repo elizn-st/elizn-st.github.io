@@ -154,8 +154,8 @@ one-shot fetches. That is deliberate: a document edited in the Firebase Console
 reaches every running app within about a second, with no reload and no refetch
 call.
 
-`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- four
-collections, eighteen shared documents and the signed-in user's own -- and
+`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- five
+collections, nineteen shared documents and the signed-in user's own -- and
 gates the app on the first snapshot, so `usePortalData()` returns plain loaded
 values and screens stay synchronous. The alternative -- a request and a skeleton
 per screen -- would mean a loading state per screen for a few kilobytes and
@@ -320,6 +320,50 @@ Everything else on the page is derived from the catalogue, as on the Rules
 screen: reports available, how many are scheduled, runs and failures this cycle,
 the next five scheduled generations, the retention breakdown, and the delivered
 list itself.
+
+### The Admin screen
+
+Profile has always said Admin is "User and role management", and the app has had
+the machinery for it since the Firebase work without ever showing it: two custom
+claims, `portalAccess` and `admin`, written by `scripts/grant-access.ts` and
+read by `firestore.rules` in `hasPortalAccess()` and `isAdmin()`. Until now they
+existed only in a rules file and a CLI script.
+
+#### The claims are now visible, and they are the real ones
+
+`AuthUser` carries an `AuthClaims`, read with `getIdTokenResult()` alongside the
+profile refresh already happening on subscribe. No forced refresh: the cached
+token is returned, which is the very token the security rules are evaluating —
+so the "Your access" panel cannot disagree with them.
+
+`claims` is `null` until that resolves rather than defaulting to `false`. "Not
+known yet" and "has no access" are different things, and a screen whose subject
+is access must not assert the second while it means the first; the panel renders
+a distinct state for it.
+
+The page's notice is chosen by the real `admin` claim, so it describes the
+session rather than an assumed role.
+
+#### The directory is reconciled against Firebase Auth
+
+`people` is authored — eleven colleagues, the same names the Rules change log
+and the Reports owners already reference. But `scripts/seed.ts` then walks the
+real `listUsers()` and, for every address that matches, **overwrites the row
+with the truth**: that account's actual claims, its actual last sign-in
+(converted to Gulf time), and `signedUp: true`.
+
+So "invited, but no account was ever created" is a fact the screen states rather
+than a prop — and the signed-in user's own row agrees with the token in their
+browser. It is also why one row reads `Sep 05` while the rest read early August:
+that one is real.
+
+Everything else is derived from the directory: people with access,
+administrators, awaiting first sign-in, suspended, the per-role headcount and
+the per-department breakdown. Selecting a role filters the directory to it,
+which is what connects the two halves of the page.
+
+With Admin in place every sidebar entry resolves to a screen, so `ROUTE_IDS` and
+`SCREEN_IDS` are now the same list.
 
 ### Going live, and giving the customer edit access
 

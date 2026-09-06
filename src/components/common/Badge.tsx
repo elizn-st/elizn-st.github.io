@@ -1,6 +1,7 @@
 import type { DecisionStatus } from '@/data/queue';
 import type { RuleStatus } from '@/data/rules';
 import type { RunStatus } from '@/data/reports';
+import type { AccountStatus } from '@/data/admin';
 import { cx } from '@/lib/cx';
 
 /** Status pill — `approved`, `pending`, `flagged`, `rejected`, `overridden`. */
@@ -51,4 +52,41 @@ export function RunBadge({
   readonly label: string;
 }) {
   return <span className={cx('badge', RUN_BADGE_CLASS[status])}>{label}</span>;
+}
+
+/**
+ * An account's standing on the portal. `suspended` takes the inert grey rather
+ * than red: access was deliberately withdrawn, which is an administrative
+ * state, not a failure.
+ */
+const ACCOUNT_BADGE_CLASS: Record<AccountStatus, string> = {
+  active: 'badge-approved',
+  invited: 'badge-pending',
+  suspended: 'badge-neutral',
+};
+
+export function AccountBadge({
+  status,
+  label,
+}: {
+  readonly status: AccountStatus;
+  readonly label: string;
+}) {
+  return <span className={cx('badge', ACCOUNT_BADGE_CLASS[status])}>{label}</span>;
+}
+
+/**
+ * One custom claim, as it appears in the ID token. The admin claim is drawn in
+ * the warning amber because it is an elevated privilege, not a normal one.
+ */
+export function ClaimBadge({
+  claim,
+  label,
+}: {
+  readonly claim: 'portal' | 'admin' | 'none';
+  readonly label: string;
+}) {
+  const tone =
+    claim === 'portal' ? 'badge-approved' : claim === 'admin' ? 'badge-flagged' : 'badge-neutral';
+  return <span className={cx('badge', tone)}>{label}</span>;
 }

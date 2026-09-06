@@ -10,6 +10,7 @@ export const SCREEN_IDS = [
   'profile',
   'rules',
   'reports',
+  'admin',
   'c1',
   'c2',
   'c3',
@@ -19,11 +20,8 @@ export const SCREEN_IDS = [
 
 export type ScreenId = (typeof SCREEN_IDS)[number];
 
-/**
- * Routes that can be addressed from the shell. `admin` is present in the
- * sidebar but disabled this cycle, so it has no screen.
- */
-export const ROUTE_IDS = [...SCREEN_IDS, 'admin'] as const;
+/** Every route the shell can address. Every one of them resolves to a screen. */
+export const ROUTE_IDS = SCREEN_IDS;
 
 export type RouteId = (typeof ROUTE_IDS)[number];
 

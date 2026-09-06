@@ -5,6 +5,7 @@ import { COMPARISON_TONES } from '@/data/simulator';
 import { BREADCRUMB_IDS, DASHBOARD_TAB_IDS } from '@/data/navigation';
 import { RULE_ENFORCEMENTS, RULE_METRICS, RULE_STAGES, RULE_STATUSES } from '@/data/rules';
 import { REPORT_CATEGORIES, REPORT_FORMATS, REPORT_METRICS, RUN_STATUSES } from '@/data/reports';
+import { ACCOUNT_STATUSES, ADMIN_METRICS, PORTAL_ROLES } from '@/data/admin';
 import { ROUTE_IDS } from '@/routing/routeIds';
 import { KPI_DIRECTIONS, KPI_TONES } from '@/data/ui';
 import { readActions, readChartCopy, readKpis, readLegend, readNotice, readPagination } from './ui';
@@ -28,6 +29,15 @@ import type {
 } from '@/data/profile';
 import type { SearchCopy, SearchGroup } from '@/data/search';
 import type { ComparisonRow, ComparisonTone, ScenarioInput, SimulatorCopy } from '@/data/simulator';
+import type {
+  AccessChange,
+  AccountStatus,
+  AdminCopy,
+  AdminKpiSpec,
+  AdminMetric,
+  PortalRole,
+  RoleCopy,
+} from '@/data/admin';
 import type {
   ReportCategory,
   ReportFormat,
@@ -639,6 +649,98 @@ export const parseReports: Parser<ReportsDoc> = (f) => ({
     runsTitle: c.string('runsTitle'),
     runsSubtitle: c.string('runsSubtitle'),
     runs: readRuns(c),
+  })),
+});
+
+export interface AdminDoc {
+  readonly copy: AdminCopy;
+}
+
+const readAdminKpis = (f: FieldReaderLike): readonly AdminKpiSpec[] =>
+  f.objects('kpis', (k) => ({
+    // The value is counted from the directory; `metric` picks which count.
+    metric: k.oneOf<AdminMetric>('metric', ADMIN_METRICS),
+    label: k.string('label'),
+    delta: k.optionalString('delta', ''),
+    direction: k.oneOfOrEmpty('direction', KPI_DIRECTIONS),
+    tone: k.oneOfOrEmpty('tone', KPI_TONES),
+  }));
+
+const readRoles = (f: FieldReaderLike): readonly RoleCopy[] =>
+  f.objects('roles', (r) => ({
+    key: r.oneOf<PortalRole>('key', PORTAL_ROLES),
+    title: r.string('title'),
+    description: r.string('description'),
+    icon: r.string('icon'),
+  }));
+
+const readAccessChanges = (f: FieldReaderLike): readonly AccessChange[] =>
+  f.objects('changes', (c) => ({
+    date: c.string('date'),
+    person: c.string('person'),
+    change: c.string('change'),
+    actor: c.string('actor'),
+    status: c.oneOf<AccountStatus>('status', ACCOUNT_STATUSES),
+  }));
+
+export const parseAdmin: Parser<AdminDoc> = (f) => ({
+  copy: f.object('copy', (c) => ({
+    title: c.string('title'),
+    chip: c.string('chip'),
+    exportLabel: c.string('exportLabel'),
+    exportIcon: c.string('exportIcon'),
+    exportMessage: c.string('exportMessage'),
+    requestLabel: c.string('requestLabel'),
+    requestIcon: c.string('requestIcon'),
+    requestMessage: c.string('requestMessage'),
+    noticeMember: readNotice(c, 'noticeMember'),
+    noticeAdmin: readNotice(c, 'noticeAdmin'),
+    kpis: readAdminKpis(c),
+
+    directoryTitle: c.string('directoryTitle'),
+    directorySubtitle: c.string('directorySubtitle'),
+    searchPlaceholder: c.string('searchPlaceholder'),
+    searchAriaLabel: c.string('searchAriaLabel'),
+    statusFilters: c.strings('statusFilters'),
+    statusChipPrefix: c.string('statusChipPrefix'),
+    roleChipPrefix: c.string('roleChipPrefix'),
+    searchChipPrefix: c.string('searchChipPrefix'),
+    columns: c.strings('columns'),
+    resultsOf: c.string('resultsOf'),
+    peopleUnit: c.string('peopleUnit'),
+    peopleUnitOne: c.string('peopleUnitOne'),
+    emptyMessage: c.string('emptyMessage'),
+    emptyIcon: c.string('emptyIcon'),
+
+    roleLabels: readLabels<PortalRole>(c, 'roleLabels', PORTAL_ROLES),
+    statusLabels: readLabels<AccountStatus>(c, 'statusLabels', ACCOUNT_STATUSES),
+    portalClaimLabel: c.string('portalClaimLabel'),
+    adminClaimLabel: c.string('adminClaimLabel'),
+    noClaimLabel: c.string('noClaimLabel'),
+    neverLabel: c.string('neverLabel'),
+    youLabel: c.string('youLabel'),
+    invitedNotSignedUp: c.string('invitedNotSignedUp'),
+
+    accessTitle: c.string('accessTitle'),
+    accessSubtitle: c.string('accessSubtitle'),
+    accessUnknown: c.string('accessUnknown'),
+    accessPortalTitle: c.string('accessPortalTitle'),
+    accessPortalNote: c.string('accessPortalNote'),
+    accessAdminTitle: c.string('accessAdminTitle'),
+    accessAdminNote: c.string('accessAdminNote'),
+    accessGranted: c.string('accessGranted'),
+    accessWithheld: c.string('accessWithheld'),
+
+    rolesTitle: c.string('rolesTitle'),
+    rolesSubtitle: c.string('rolesSubtitle'),
+    roles: readRoles(c),
+
+    departmentsTitle: c.string('departmentsTitle'),
+    departmentsSubtitle: c.string('departmentsSubtitle'),
+
+    changesTitle: c.string('changesTitle'),
+    changesSubtitle: c.string('changesSubtitle'),
+    changes: readAccessChanges(c),
   })),
 });
 

@@ -71,6 +71,7 @@ import {
 import { CYCLE_FILTER_OPTIONS, FILTER_GROUPS, FILTERS_COPY } from '../src/data/filters.ts';
 import { PRICING_RULES, RULES_COPY } from '../src/data/rules.ts';
 import { REPORTS, REPORTS_COPY } from '../src/data/reports.ts';
+import { ADMIN_COPY, PEOPLE } from '../src/data/admin.ts';
 import { NAVIGATION_COPY } from '../src/data/navigation.ts';
 import { BOARDS_COPY } from '../src/data/boards.ts';
 import { CHART_DETAILS_COPY } from '../src/data/chartDetails.ts';
@@ -79,6 +80,8 @@ import { SEED_USER_DISPLAY_NAME, SEED_USER_EMAIL, USER_PROFILE } from '../src/da
 import type { PaginationSpec } from '../src/data/ui.ts';
 
 const EMULATOR_HOST = '127.0.0.1:8080';
+/** Every time on the portal is written in the reviewer's own zone. */
+const GULF_TIME_ZONE = 'Asia/Dubai';
 const AUTH_EMULATOR_HOST = '127.0.0.1:9099';
 
 /** Readable, stable document ids -- a customer editing in the Console sees
@@ -149,6 +152,7 @@ const perDocument = {
   ),
   rules: PRICING_RULES.map((rule, order) => [slug(rule.name), { ...rule, order }] as const),
   reports: REPORTS.map((report, order) => [slug(report.name), { ...report, order }] as const),
+  people: PEOPLE.map((person, order) => [slug(person.email), { ...person, order }] as const),
 };
 
 /**
@@ -222,6 +226,7 @@ const wholeDocuments = {
   },
   'content/rules': { copy: RULES_COPY },
   'content/reports': { copy: REPORTS_COPY },
+  'content/admin': { copy: ADMIN_COPY },
   'content/navigation': { copy: NAVIGATION_COPY },
   'content/boards': { copy: BOARDS_COPY },
   'content/chartDetails': {
@@ -271,7 +276,85 @@ async function run(): Promise<void> {
   console.log(`\nCommitted ${writes} writes.`);
 
   await seedUser();
+  await reconcileDirectory();
 }
+
+/**
+ * Overlays the real Firebase Auth accounts onto the authored directory.
+ *
+ * The directory is authored -- eleven colleagues, so the screen has something
+ * to show -- but the claims and last sign-in it prints must not be fiction for
+ * anyone who is a real account. This walks the actual user list and, for every
+ * address that matches, writes back that account's true `portalAccess` and
+ * `admin` claims, its real last sign-in, and `signedUp: true`.
+ *
+ * The consequence is that "invited, never signed in" is a fact the Admin screen
+ * can state rather than a prop, and the signed-in user's own row agrees with
+ * the token in their browser.
+ */
+async function reconcileDirectory(): Promise<void> {
+  const auth = getAuth();
+
+  const accounts = await auth.listUsers(1000).catch(() => null);
+  if (!accounts) {
+    console.log('\nSkipped directory reconciliation: could not list accounts.');
+    return;
+  }
+
+  const byEmail = new Map(
+    accounts.users.filter((user) => user.email).map((user) => [user.email!.toLowerCase(), user]),
+  );
+
+  const batch = db.batch();
+  let matched = 0;
+
+  for (const person of PEOPLE) {
+    const account = byEmail.get(person.email.toLowerCase());
+    if (!account) continue;
+
+    const claims = (account.customClaims ?? {}) as Record<string, unknown>;
+    const lastSignIn = account.metadata.lastSignInTime;
+
+    batch.set(
+      db.collection('people').doc(slug(person.email)),
+      {
+        signedUp: true,
+        portalAccess: claims.portalAccess === true,
+        admin: claims.admin === true,
+        status: account.disabled ? 'suspended' : 'active',
+        ...(lastSignIn ? { lastActive: formatSignIn(lastSignIn) } : {}),
+      },
+      { merge: true },
+    );
+    matched += 1;
+  }
+
+  if (!matched) {
+    console.log('\nNo directory entries matched a real account.');
+    return;
+  }
+
+  await batch.commit();
+  console.log(
+    `\nReconciled ${matched} directory entr${matched === 1 ? 'y' : 'ies'} with Firebase Auth.`,
+  );
+}
+
+/** `Wed, 06 Aug 2026 09:12:00 GMT` -> `Aug 06, 13:12`, the portal's own format. */
+const formatSignIn = (iso: string): string => {
+  const when = new Date(iso);
+  const date = when.toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    timeZone: GULF_TIME_ZONE,
+  });
+  const time = when.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: GULF_TIME_ZONE,
+  });
+  return `${date}, ${time}`;
+};
 
 /**
  * The portal reads the signed-in person's name and email from Firebase Auth

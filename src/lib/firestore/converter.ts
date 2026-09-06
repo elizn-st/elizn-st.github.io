@@ -14,7 +14,7 @@ export interface ConverterSpec<T> {
    * Only needed for collections the client writes to (per-user state). Org
    * data is Console- and Admin-SDK-authored, so leaving this out makes an
    * accidental client write fail loudly at the call site rather than at the
-   * rules boundary.
+   * rules' boundary.
    */
   readonly serialize?: (value: T) => DocumentData;
 }

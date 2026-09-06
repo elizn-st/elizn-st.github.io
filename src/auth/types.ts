@@ -1,8 +1,28 @@
+/**
+ * The custom claims this portal grants, as they appear in the ID token.
+ *
+ * These are the same two `firestore.rules` reads in `hasPortalAccess()` and
+ * `isAdmin()`, and the same two `scripts/grant-access.ts` writes -- so the UI
+ * and the security rules agree because they read one source, not because they
+ * were kept in step by hand.
+ */
+export interface AuthClaims {
+  readonly portalAccess: boolean;
+  readonly admin: boolean;
+}
+
 /** The identity the app cares about, independent of who authenticated it. */
 export interface AuthUser {
   readonly uid: string;
   readonly email: string;
   readonly displayName: string;
+  /**
+   * `null` until the token has been read, which is a moment after sign-in.
+   * Left as null rather than defaulted to false: "not known yet" and "has no
+   * access" are different things, and a screen showing claims must not assert
+   * the second while it means the first.
+   */
+  readonly claims: AuthClaims | null;
 }
 
 /**

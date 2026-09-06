@@ -8,6 +8,7 @@ import { parseDashboards, parseSeries } from '@/repositories/analytics';
 import { parseBoards, parseChartDetails } from '@/repositories/boards';
 import { parsePricingRule, RULES } from '@/repositories/rules';
 import { parseReport, REPORTS } from '@/repositories/reports';
+import { parsePerson, PEOPLE } from '@/repositories/admin';
 import {
   parseChat,
   parseChrome,
@@ -17,6 +18,7 @@ import {
   parseNavigation,
   parseNotifications,
   parseProfile,
+  parseAdmin,
   parseQueue,
   parseReports,
   parseRules,
@@ -33,6 +35,8 @@ import type { QueueRow } from '@/data/queue';
 import type { AuditEntry } from '@/data/history';
 import type { RuleRecord } from '@/repositories/rules';
 import type { ReportRecord } from '@/repositories/reports';
+import type { PersonRecord } from '@/repositories/admin';
+import type { AuthClaims } from '@/auth/types';
 import type { DashboardsDoc, SeriesDoc } from '@/repositories/analytics';
 import type { BoardsDoc, ChartDetailsDoc } from '@/repositories/boards';
 import type { FiltersDoc } from '@/repositories/decisions';
@@ -45,6 +49,7 @@ import type {
   NavigationDoc,
   NotificationsDoc,
   ProfileDoc,
+  AdminDoc,
   QueueDoc,
   ReportsDoc,
   RulesDoc,
@@ -68,6 +73,8 @@ export interface PortalData {
   readonly pricingRules: readonly RuleRecord[];
   /** The report catalogue; `reports` below is the screen's copy. */
   readonly catalogue: readonly ReportRecord[];
+  /** The access directory; `admin` below is the screen's copy. */
+  readonly people: readonly PersonRecord[];
   readonly series: SeriesDoc;
   readonly dashboards: DashboardsDoc;
   readonly home: HomeDoc;
@@ -81,6 +88,7 @@ export interface PortalData {
   readonly simulator: SimulatorDoc;
   readonly rules: RulesDoc;
   readonly reports: ReportsDoc;
+  readonly admin: AdminDoc;
   readonly navigation: NavigationDoc;
   readonly boards: BoardsDoc;
   readonly chartDetails: ChartDetailsDoc;
@@ -112,6 +120,11 @@ export interface Identity {
   readonly location: string;
   /** Report ids this person has chosen to receive. */
   readonly reportSubscriptions: readonly string[];
+  /**
+   * The custom claims on this session's ID token -- the same ones the security
+   * rules evaluate. `null` until the token has been read.
+   */
+  readonly claims: AuthClaims | null;
 }
 
 /** First letters of the first two words: the fallback when no profile exists. */
@@ -142,6 +155,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const decisions = useFirestoreCollection(() => collection(db, DECISIONS), parseDecision, []);
   const pricingRules = useFirestoreCollection(() => collection(db, RULES), parsePricingRule, []);
   const catalogue = useFirestoreCollection(() => collection(db, REPORTS), parseReport, []);
+  const people = useFirestoreCollection(() => collection(db, PEOPLE), parsePerson, []);
 
   const series = useFirestoreDoc(() => doc(db, 'analytics/series'), parseSeries, []);
   const dashboards = useFirestoreDoc(() => doc(db, 'analytics/dashboards'), parseDashboards, []);
@@ -160,6 +174,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const simulator = useFirestoreDoc(() => doc(db, 'content/simulator'), parseSimulator, []);
   const rules = useFirestoreDoc(() => doc(db, 'content/rules'), parseRules, []);
   const reports = useFirestoreDoc(() => doc(db, 'content/reports'), parseReports, []);
+  const admin = useFirestoreDoc(() => doc(db, 'content/admin'), parseAdmin, []);
   const navigation = useFirestoreDoc(() => doc(db, 'content/navigation'), parseNavigation, []);
   const boards = useFirestoreDoc(() => doc(db, 'content/boards'), parseBoards, []);
   const chartDetails = useFirestoreDoc(
@@ -189,6 +204,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
         'content/simulator': simulator,
         'content/rules': rules,
         'content/reports': reports,
+        'content/admin': admin,
         'content/navigation': navigation,
         'content/boards': boards,
         'content/chartDetails': chartDetails,
@@ -209,6 +225,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       simulator,
       rules,
       reports,
+      admin,
       navigation,
       boards,
       chartDetails,
@@ -244,8 +261,9 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       employeeId: own?.employeeId ?? '',
       location: own?.location ?? '',
       reportSubscriptions: own?.reportSubscriptions ?? [],
+      claims: user?.claims ?? null,
     };
-  }, [uid, user?.displayName, user?.email, userProfile.data]);
+  }, [uid, user?.displayName, user?.email, user?.claims, userProfile.data]);
 
   const diagnosis = useMemo(() => {
     const everything = [
@@ -253,6 +271,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       decisions,
       pricingRules,
       catalogue,
+      people,
       ...Object.values(documents),
       userProfile,
     ];
@@ -276,7 +295,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     if (problems.length) return { kind: 'error' as const, problems };
     if (everything.some((s) => s.status === 'loading')) return { kind: 'loading' as const };
     return { kind: 'ready' as const };
-  }, [recommendations, decisions, pricingRules, catalogue, documents, userProfile]);
+  }, [recommendations, decisions, pricingRules, catalogue, people, documents, userProfile]);
 
   const value = useMemo<PortalData | null>(() => {
     if (diagnosis.kind !== 'ready') return null;
@@ -285,6 +304,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       decisions: byOrder(decisions.data),
       pricingRules: byOrder(pricingRules.data),
       catalogue: byOrder(catalogue.data),
+      people: byOrder(people.data),
       series: series.data!,
       dashboards: dashboards.data!,
       home: home.data!,
@@ -298,6 +318,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       simulator: simulator.data!,
       rules: rules.data!,
       reports: reports.data!,
+      admin: admin.data!,
       navigation: navigation.data!,
       boards: boards.data!,
       chartDetails: chartDetails.data!,
@@ -311,6 +332,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     decisions.data,
     pricingRules.data,
     catalogue.data,
+    people.data,
     series.data,
     dashboards.data,
     home.data,
@@ -324,6 +346,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     simulator.data,
     rules.data,
     reports.data,
+    admin.data,
     navigation.data,
     boards.data,
     chartDetails.data,

@@ -1060,3 +1060,26 @@ transition:opacity 220ms var(--eo)}
 /* Seven columns, one of them a switch: below this the table scrolls inside its
    own card rather than squeezing the report name. */
 .reports-table .tbl-scroll>.trow{min-width:1060px}
+
+/* ==========================================================================
+   ADMIN — the access directory
+   ========================================================================== */
+
+/* Six columns, one of them a pair of claim pills: below this the table scrolls
+   inside its own card rather than squeezing the person's name. */
+.admin-table .tbl-scroll>.trow{min-width:1040px}
+
+/* The directory's initial badge is the sidebar avatar at table scale, greyed
+   for anyone whose account cannot actually get in. */
+.avatar-sm{width:24px;height:24px;border-radius:12px;font-size:10px}
+.avatar.is-muted{background:var(--n30)}
+
+/* Marks the signed-in person's own row. */
+.you-chip{margin-left:6px;vertical-align:1px}
+
+/* A role is a filter, so its row is a button that keeps the .pf-perm layout. */
+.role-row{width:100%;text-align:left;font:inherit;color:inherit}
+.role-row:hover .pf-toggle-t{color:var(--maroon)}
+.role-row.is-selected .pf-toggle-t{color:var(--maroon)}
+.role-row.is-selected .pf-perm-ic{background:var(--nav-active-bg);color:var(--maroon)}
+.role-row.is-selected .badge{background:var(--maroon100);color:var(--maroon)}

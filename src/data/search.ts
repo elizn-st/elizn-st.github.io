@@ -111,6 +111,35 @@ export const SEARCH_INDEX: readonly SearchGroup[] = [
         meta: 'Schedules, formats and delivery',
         route: 'reports',
       },
+      {
+        icon: 'user-gear',
+        label: 'Review portal access',
+        meta: 'People, roles and claims',
+        route: 'admin',
+      },
+    ],
+  },
+  {
+    label: 'People',
+    entries: [
+      {
+        icon: 'user-gear',
+        label: 'Hassan Nasser',
+        meta: 'Administrator · Platform Engineering',
+        route: 'admin',
+      },
+      {
+        icon: 'shield-check',
+        label: 'Mariam Haddad',
+        meta: 'Governance lead · Pricing Governance',
+        route: 'admin',
+      },
+      {
+        icon: 'clock-counter-clockwise',
+        label: 'Omar Siddiqui',
+        meta: 'Auditor · Internal Audit',
+        route: 'admin',
+      },
     ],
   },
   {
