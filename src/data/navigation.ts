@@ -12,7 +12,7 @@ export const NAV_ITEMS: readonly NavEntry[] = [
   { id: 'c1', label: 'Dashboards', icon: 'chart-line' },
   { id: 'queue', label: 'Recommendations', icon: 'list-checks' },
   { id: 'rules', label: 'Rules', icon: 'sliders-horizontal' },
-  { id: 'reports', label: 'Reports', icon: 'file-text', disabled: true },
+  { id: 'reports', label: 'Reports', icon: 'file-text' },
   { id: 'admin', label: 'Admin', icon: 'user-gear', disabled: true },
 ];
 
@@ -54,6 +54,7 @@ export const BREADCRUMB_IDS = [
   'history',
   'profile',
   'rules',
+  'reports',
 ] as const;
 
 export type BreadcrumbId = (typeof BREADCRUMB_IDS)[number];
@@ -106,6 +107,7 @@ export const NAVIGATION_COPY: NavigationCopy = {
     history: { section: 'Recommendations', page: 'Decision history' },
     profile: { section: '', page: 'Profile' },
     rules: { section: '', page: 'Rules' },
+    reports: { section: '', page: 'Reports' },
   },
   notFound: {
     page: 'Screen not found',

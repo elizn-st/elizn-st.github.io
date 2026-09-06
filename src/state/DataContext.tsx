@@ -7,6 +7,7 @@ import { DECISIONS, parseDecision, parseFilters } from '@/repositories/decisions
 import { parseDashboards, parseSeries } from '@/repositories/analytics';
 import { parseBoards, parseChartDetails } from '@/repositories/boards';
 import { parsePricingRule, RULES } from '@/repositories/rules';
+import { parseReport, REPORTS } from '@/repositories/reports';
 import {
   parseChat,
   parseChrome,
@@ -17,6 +18,7 @@ import {
   parseNotifications,
   parseProfile,
   parseQueue,
+  parseReports,
   parseRules,
   parseSearch,
   parseSimulator,
@@ -30,6 +32,7 @@ import type { DocumentState } from '@/hooks/useFirestore';
 import type { QueueRow } from '@/data/queue';
 import type { AuditEntry } from '@/data/history';
 import type { RuleRecord } from '@/repositories/rules';
+import type { ReportRecord } from '@/repositories/reports';
 import type { DashboardsDoc, SeriesDoc } from '@/repositories/analytics';
 import type { BoardsDoc, ChartDetailsDoc } from '@/repositories/boards';
 import type { FiltersDoc } from '@/repositories/decisions';
@@ -43,6 +46,7 @@ import type {
   NotificationsDoc,
   ProfileDoc,
   QueueDoc,
+  ReportsDoc,
   RulesDoc,
   SearchDoc,
   SimulatorDoc,
@@ -62,6 +66,8 @@ export interface PortalData {
   readonly decisions: readonly AuditEntry[];
   /** The guardrail rules themselves; `rules` below is the screen's copy. */
   readonly pricingRules: readonly RuleRecord[];
+  /** The report catalogue; `reports` below is the screen's copy. */
+  readonly catalogue: readonly ReportRecord[];
   readonly series: SeriesDoc;
   readonly dashboards: DashboardsDoc;
   readonly home: HomeDoc;
@@ -74,6 +80,7 @@ export interface PortalData {
   readonly search: SearchDoc;
   readonly simulator: SimulatorDoc;
   readonly rules: RulesDoc;
+  readonly reports: ReportsDoc;
   readonly navigation: NavigationDoc;
   readonly boards: BoardsDoc;
   readonly chartDetails: ChartDetailsDoc;
@@ -103,6 +110,8 @@ export interface Identity {
   readonly headline: string;
   readonly employeeId: string;
   readonly location: string;
+  /** Report ids this person has chosen to receive. */
+  readonly reportSubscriptions: readonly string[];
 }
 
 /** First letters of the first two words: the fallback when no profile exists. */
@@ -132,6 +141,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   );
   const decisions = useFirestoreCollection(() => collection(db, DECISIONS), parseDecision, []);
   const pricingRules = useFirestoreCollection(() => collection(db, RULES), parsePricingRule, []);
+  const catalogue = useFirestoreCollection(() => collection(db, REPORTS), parseReport, []);
 
   const series = useFirestoreDoc(() => doc(db, 'analytics/series'), parseSeries, []);
   const dashboards = useFirestoreDoc(() => doc(db, 'analytics/dashboards'), parseDashboards, []);
@@ -149,6 +159,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
   const search = useFirestoreDoc(() => doc(db, 'content/search'), parseSearch, []);
   const simulator = useFirestoreDoc(() => doc(db, 'content/simulator'), parseSimulator, []);
   const rules = useFirestoreDoc(() => doc(db, 'content/rules'), parseRules, []);
+  const reports = useFirestoreDoc(() => doc(db, 'content/reports'), parseReports, []);
   const navigation = useFirestoreDoc(() => doc(db, 'content/navigation'), parseNavigation, []);
   const boards = useFirestoreDoc(() => doc(db, 'content/boards'), parseBoards, []);
   const chartDetails = useFirestoreDoc(
@@ -177,6 +188,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
         'content/search': search,
         'content/simulator': simulator,
         'content/rules': rules,
+        'content/reports': reports,
         'content/navigation': navigation,
         'content/boards': boards,
         'content/chartDetails': chartDetails,
@@ -196,6 +208,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       search,
       simulator,
       rules,
+      reports,
       navigation,
       boards,
       chartDetails,
@@ -221,13 +234,16 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       email: user?.email ?? '',
       fullName,
       firstName: fullName.split(/\s+/)[0] ?? '',
-      initials: own?.initials ?? initialsFrom(fullName),
+      // `||`, not `??`: an absent field parses to '' rather than undefined,
+      // and an empty stored value should still fall back to the derived one.
+      initials: own?.initials || initialsFrom(fullName),
       jobTitle,
       department,
       roleLine,
       headline: [roleLine, focus].filter(Boolean).join(' · '),
       employeeId: own?.employeeId ?? '',
       location: own?.location ?? '',
+      reportSubscriptions: own?.reportSubscriptions ?? [],
     };
   }, [uid, user?.displayName, user?.email, userProfile.data]);
 
@@ -236,6 +252,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       recommendations,
       decisions,
       pricingRules,
+      catalogue,
       ...Object.values(documents),
       userProfile,
     ];
@@ -259,7 +276,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     if (problems.length) return { kind: 'error' as const, problems };
     if (everything.some((s) => s.status === 'loading')) return { kind: 'loading' as const };
     return { kind: 'ready' as const };
-  }, [recommendations, decisions, pricingRules, documents, userProfile]);
+  }, [recommendations, decisions, pricingRules, catalogue, documents, userProfile]);
 
   const value = useMemo<PortalData | null>(() => {
     if (diagnosis.kind !== 'ready') return null;
@@ -267,6 +284,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       recommendations: byOrder(recommendations.data),
       decisions: byOrder(decisions.data),
       pricingRules: byOrder(pricingRules.data),
+      catalogue: byOrder(catalogue.data),
       series: series.data!,
       dashboards: dashboards.data!,
       home: home.data!,
@@ -279,6 +297,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
       search: search.data!,
       simulator: simulator.data!,
       rules: rules.data!,
+      reports: reports.data!,
       navigation: navigation.data!,
       boards: boards.data!,
       chartDetails: chartDetails.data!,
@@ -291,6 +310,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     recommendations.data,
     decisions.data,
     pricingRules.data,
+    catalogue.data,
     series.data,
     dashboards.data,
     home.data,
@@ -303,6 +323,7 @@ export function DataProvider({ children }: { readonly children: ReactNode }) {
     search.data,
     simulator.data,
     rules.data,
+    reports.data,
     navigation.data,
     boards.data,
     chartDetails.data,

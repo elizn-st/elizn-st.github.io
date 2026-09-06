@@ -4,6 +4,7 @@ import { PERMISSION_STATES } from '@/data/profile';
 import { COMPARISON_TONES } from '@/data/simulator';
 import { BREADCRUMB_IDS, DASHBOARD_TAB_IDS } from '@/data/navigation';
 import { RULE_ENFORCEMENTS, RULE_METRICS, RULE_STAGES, RULE_STATUSES } from '@/data/rules';
+import { REPORT_CATEGORIES, REPORT_FORMATS, REPORT_METRICS, RUN_STATUSES } from '@/data/reports';
 import { ROUTE_IDS } from '@/routing/routeIds';
 import { KPI_DIRECTIONS, KPI_TONES } from '@/data/ui';
 import { readActions, readChartCopy, readKpis, readLegend, readNotice, readPagination } from './ui';
@@ -27,6 +28,15 @@ import type {
 } from '@/data/profile';
 import type { SearchCopy, SearchGroup } from '@/data/search';
 import type { ComparisonRow, ComparisonTone, ScenarioInput, SimulatorCopy } from '@/data/simulator';
+import type {
+  ReportCategory,
+  ReportFormat,
+  ReportKpiSpec,
+  ReportMetric,
+  ReportRun,
+  ReportsCopy,
+  RunStatus,
+} from '@/data/reports';
 import type {
   RuleChange,
   RuleEnforcement,
@@ -556,12 +566,95 @@ export const parseChrome: Parser<ChromeDoc> = (f) => ({
   })),
 });
 
+export interface ReportsDoc {
+  readonly copy: ReportsCopy;
+}
+
+const readReportKpis = (f: FieldReaderLike): readonly ReportKpiSpec[] =>
+  f.objects('kpis', (k) => ({
+    // The value is counted from the catalogue; `metric` picks which count.
+    metric: k.oneOf<ReportMetric>('metric', REPORT_METRICS),
+    label: k.string('label'),
+    delta: k.optionalString('delta', ''),
+    direction: k.oneOfOrEmpty('direction', KPI_DIRECTIONS),
+    tone: k.oneOfOrEmpty('tone', KPI_TONES),
+  }));
+
+const readRuns = (f: FieldReaderLike): readonly ReportRun[] =>
+  f.objects('runs', (r) => ({
+    report: r.string('report'),
+    when: r.string('when'),
+    status: r.oneOf<RunStatus>('status', RUN_STATUSES),
+    detail: r.string('detail'),
+    trigger: r.string('trigger'),
+  }));
+
+export const parseReports: Parser<ReportsDoc> = (f) => ({
+  copy: f.object('copy', (c) => ({
+    title: c.string('title'),
+    chip: c.string('chip'),
+    exportLabel: c.string('exportLabel'),
+    exportIcon: c.string('exportIcon'),
+    exportMessage: c.string('exportMessage'),
+    requestLabel: c.string('requestLabel'),
+    requestIcon: c.string('requestIcon'),
+    requestMessage: c.string('requestMessage'),
+    notice: readNotice(c, 'notice'),
+    kpis: readReportKpis(c),
+
+    catalogueTitle: c.string('catalogueTitle'),
+    catalogueSubtitle: c.string('catalogueSubtitle'),
+    searchPlaceholder: c.string('searchPlaceholder'),
+    searchAriaLabel: c.string('searchAriaLabel'),
+    categoryFilters: c.strings('categoryFilters'),
+    categoryChipPrefix: c.string('categoryChipPrefix'),
+    searchChipPrefix: c.string('searchChipPrefix'),
+    columns: c.strings('columns'),
+    resultsOf: c.string('resultsOf'),
+    reportsUnit: c.string('reportsUnit'),
+    reportsUnitOne: c.string('reportsUnitOne'),
+    emptyMessage: c.string('emptyMessage'),
+    emptyIcon: c.string('emptyIcon'),
+
+    categoryLabels: readLabels<ReportCategory>(c, 'categoryLabels', REPORT_CATEGORIES),
+    formatLabels: readLabels<ReportFormat>(c, 'formatLabels', REPORT_FORMATS),
+    formatIcons: readLabels<ReportFormat>(c, 'formatIcons', REPORT_FORMATS),
+    statusLabels: readLabels<RunStatus>(c, 'statusLabels', RUN_STATUSES),
+    deliveryAriaPrefix: c.string('deliveryAriaPrefix'),
+    subscribeMessage: c.string('subscribeMessage'),
+    unsubscribeMessage: c.string('unsubscribeMessage'),
+    subscribeFailed: c.string('subscribeFailed'),
+
+    deliveredTitle: c.string('deliveredTitle'),
+    deliveredSubtitle: c.string('deliveredSubtitle'),
+    deliveredEmpty: c.string('deliveredEmpty'),
+
+    upcomingTitle: c.string('upcomingTitle'),
+    upcomingSubtitle: c.string('upcomingSubtitle'),
+    recipientsUnit: c.string('recipientsUnit'),
+
+    retentionTitle: c.string('retentionTitle'),
+    retentionSubtitle: c.string('retentionSubtitle'),
+
+    runsTitle: c.string('runsTitle'),
+    runsSubtitle: c.string('runsSubtitle'),
+    runs: readRuns(c),
+  })),
+});
+
 /** `users/{uid}`: the signed-in person's own organisational details. */
+/**
+ * Every field is optional. The document is created the first time someone
+ * changes a delivery preference, which can happen before anyone has filled in
+ * their organisational details -- so a document holding only subscriptions has
+ * to parse, and the blank fields simply render blank.
+ */
 export const parseUserProfile: Parser<UserProfile> = (f) => ({
-  initials: f.string('initials'),
-  jobTitle: f.string('jobTitle'),
-  department: f.string('department'),
-  focus: f.string('focus'),
-  employeeId: f.string('employeeId'),
-  location: f.string('location'),
+  initials: f.optionalString('initials', ''),
+  jobTitle: f.optionalString('jobTitle', ''),
+  department: f.optionalString('department', ''),
+  focus: f.optionalString('focus', ''),
+  employeeId: f.optionalString('employeeId', ''),
+  location: f.optionalString('location', ''),
+  reportSubscriptions: f.optionalStrings('reportSubscriptions'),
 });

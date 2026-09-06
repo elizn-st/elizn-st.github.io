@@ -154,8 +154,8 @@ one-shot fetches. That is deliberate: a document edited in the Firebase Console
 reaches every running app within about a second, with no reload and no refetch
 call.
 
-`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- three
-collections, seventeen shared documents and the signed-in user's own -- and
+`DataProvider` (`src/state/DataContext.tsx`) owns every subscription -- four
+collections, eighteen shared documents and the signed-in user's own -- and
 gates the app on the first snapshot, so `usePortalData()` returns plain loaded
 values and screens stay synchronous. The alternative -- a request and a skeleton
 per screen -- would mean a loading state per screen for a few kilobytes and
@@ -281,6 +281,45 @@ enforcement; the status control filters; each chip clears the specific filter it
 stands for; the count and empty state follow. That needed optional controlled
 props on `SearchField`, `Segmented` and `FilterChips`, all backwards compatible
 -- left out, each component behaves exactly as before.
+
+### The Reports screen
+
+Reports are the one thing the dashboards, the audit log and the AI analyst are
+not: **scheduled, distributable, point-in-time artefacts**, with a format, a
+cadence, a distribution list, a retention window and a run history. The weekly
+cycle report is scheduled for Mondays 08:00 GST, which is exactly what Profile
+already offers as a notification preference.
+
+The permission split is what shapes the page. Profile says Reports is denied for
+this role -- and the Reports page makes that concrete: **Admin owns schedules,
+distribution lists and retention; the reviewer owns which reports reach them**.
+(The permission's subtitle was sharpened from "Schedule and export" to "Schedule
+and distribute" to say so.)
+
+#### The only write the portal makes
+
+Toggling delivery writes `reportSubscriptions` to `users/{uid}` -- a real
+Firestore write, permitted by the per-user rule that has existed since the
+Firebase work and had never been exercised:
+
+    match /users/{uid} { allow read, write: if isOwner(uid); }
+
+No optimistic state is needed. Firestore applies the write to its local cache
+and fires the document listener straight away, so the switch moves immediately
+and the server confirms behind it; a rejected write rolls the cache back and the
+switch returns on its own. The write `merge`s, so the organisational fields
+beside it are untouched.
+
+That ownership split has a consequence for the seed: **`scripts/seed.ts` must
+not clobber a choice the user made.** It now writes only the organisational
+fields, with `merge`, and supplies the default subscription only when the field
+has never been set. Without that, re-seeding silently wiped delivery
+preferences -- which it did, once, before the seed was fixed.
+
+Everything else on the page is derived from the catalogue, as on the Rules
+screen: reports available, how many are scheduled, runs and failures this cycle,
+the next five scheduled generations, the retention breakdown, and the delivered
+list itself.
 
 ### Going live, and giving the customer edit access
 

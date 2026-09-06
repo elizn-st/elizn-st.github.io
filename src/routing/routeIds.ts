@@ -9,6 +9,7 @@ export const SCREEN_IDS = [
   'chartd',
   'profile',
   'rules',
+  'reports',
   'c1',
   'c2',
   'c3',
@@ -19,10 +20,10 @@ export const SCREEN_IDS = [
 export type ScreenId = (typeof SCREEN_IDS)[number];
 
 /**
- * Routes that can be addressed from the shell. `reports` and `admin` are
- * present in the sidebar but disabled this cycle, so they have no screen.
+ * Routes that can be addressed from the shell. `admin` is present in the
+ * sidebar but disabled this cycle, so it has no screen.
  */
-export const ROUTE_IDS = [...SCREEN_IDS, 'reports', 'admin'] as const;
+export const ROUTE_IDS = [...SCREEN_IDS, 'admin'] as const;
 
 export type RouteId = (typeof ROUTE_IDS)[number];
 

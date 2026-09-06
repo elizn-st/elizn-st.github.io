@@ -17,6 +17,12 @@ export interface UserProfile {
   readonly focus: string;
   readonly employeeId: string;
   readonly location: string;
+  /**
+   * Report ids this person has chosen to receive. The one thing on the portal
+   * a reviewer owns and writes for themselves -- everything else about a
+   * report's distribution belongs to Admin.
+   */
+  readonly reportSubscriptions: readonly string[];
 }
 
 /** Seeded for the reviewer the portal was built around. */
@@ -27,6 +33,9 @@ export const USER_PROFILE: UserProfile = {
   focus: 'Pricing governance',
   employeeId: 'Employee ID 40 128',
   location: 'Dubai, GST +4',
+  // Seeded with the cycle report, which Profile already offers as a
+  // notification preference: "Weekly report - Every Monday at 08:00 GST".
+  reportSubscriptions: ['weekly-pricing-cycle-report'],
 };
 
 /** The account this profile is seeded against. */

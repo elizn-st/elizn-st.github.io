@@ -70,6 +70,7 @@ import {
 } from '../src/data/simulator.ts';
 import { CYCLE_FILTER_OPTIONS, FILTER_GROUPS, FILTERS_COPY } from '../src/data/filters.ts';
 import { PRICING_RULES, RULES_COPY } from '../src/data/rules.ts';
+import { REPORTS, REPORTS_COPY } from '../src/data/reports.ts';
 import { NAVIGATION_COPY } from '../src/data/navigation.ts';
 import { BOARDS_COPY } from '../src/data/boards.ts';
 import { CHART_DETAILS_COPY } from '../src/data/chartDetails.ts';
@@ -147,6 +148,7 @@ const perDocument = {
       [slug(`${entry.date} ${entry.time} ${entry.sku}`), { ...entry, order }] as const,
   ),
   rules: PRICING_RULES.map((rule, order) => [slug(rule.name), { ...rule, order }] as const),
+  reports: REPORTS.map((report, order) => [slug(report.name), { ...report, order }] as const),
 };
 
 /**
@@ -219,6 +221,7 @@ const wholeDocuments = {
     kpis: SIMULATOR_KPIS,
   },
   'content/rules': { copy: RULES_COPY },
+  'content/reports': { copy: REPORTS_COPY },
   'content/navigation': { copy: NAVIGATION_COPY },
   'content/boards': { copy: BOARDS_COPY },
   'content/chartDetails': {
@@ -294,9 +297,19 @@ async function seedUser(): Promise<void> {
     console.log(`\nSet Auth displayName for ${SEED_USER_EMAIL} to "${SEED_USER_DISPLAY_NAME}".`);
   }
 
-  await db.doc(`users/${user.uid}`).set(plain(USER_PROFILE) as Record<string, unknown>);
+  // The organisational fields are the seed's to own; `reportSubscriptions` is
+  // the user's, chosen on the Reports screen. Re-seeding must not throw those
+  // choices away, so the default list is written only when the field has never
+  // been set, and the write merges rather than replaces.
+  const existing = await db.doc(`users/${user.uid}`).get();
+  const { reportSubscriptions, ...organisational } = USER_PROFILE;
+  const firstSeed = existing.get('reportSubscriptions') === undefined;
+  const payload = firstSeed ? { ...organisational, reportSubscriptions } : organisational;
+
+  await db.doc(`users/${user.uid}`).set(plain(payload) as Record<string, unknown>, { merge: true });
   console.log(
-    `  users/${user.uid.slice(0, 8)}…        1 document, ${Object.keys(USER_PROFILE).length} fields`,
+    `  users/${user.uid.slice(0, 8)}\u2026        1 document, ${Object.keys(payload).length} fields` +
+      (firstSeed ? '' : ' (delivery preferences kept)'),
   );
 }
 

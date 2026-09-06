@@ -44,10 +44,11 @@ service cloud.firestore {
     }
 
     // ---- org-wide data -------------------------------------------------------
-    // `recommendations`, `decisions` and `rules` are one document per row, so
-    // they can be queried and edited individually. `analytics`, `content` and
-    // `config` hold documents that are always read whole -- one per chart series
-    // or per screen's copy -- because Firestore bills per document read.
+    // `recommendations`, `decisions`, `rules` and `reports` are one document
+    // per row, so they can be queried and edited individually. `analytics`,
+    // `content` and `config` hold documents that are always read whole -- one
+    // per chart series or per screen's copy -- because Firestore bills per
+    // document read.
     //
     // Approving or rejecting a recommendation is a decision, not an edit: it
     // belongs in `decisions` as a new document, so `recommendations` itself
@@ -68,6 +69,15 @@ service cloud.firestore {
     // for a reviewer. A proposed change is a request, not an edit, so nothing
     // here takes a client write.
     match /rules/{ruleId} {
+      allow read: if hasPortalAccess();
+      allow write: if isAdmin();
+    }
+
+    // The report catalogue: schedules, distribution lists and retention are
+    // Admin's, which is why a reviewer cannot write here. What a reviewer *can*
+    // change -- which reports reach them -- lives in their own user document
+    // below, and is the only write the portal makes.
+    match /reports/{reportId} {
       allow read: if hasPortalAccess();
       allow write: if isAdmin();
     }

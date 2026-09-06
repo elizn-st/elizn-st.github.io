@@ -8,6 +8,7 @@ import { ChatScreen, chatMeta } from '@/screens/ChatScreen';
 import { HistoryScreen, historyMeta } from '@/screens/HistoryScreen';
 import { ProfileScreen, profileMeta } from '@/screens/ProfileScreen';
 import { RulesScreen, rulesMeta } from '@/screens/RulesScreen';
+import { ReportsScreen, reportsMeta } from '@/screens/ReportsScreen';
 import { ChartDetailScreen, chartDetailMeta } from '@/screens/chartDetail/ChartDetailScreen';
 import {
   PricingPerformanceScreen,
@@ -38,6 +39,7 @@ export const SCREENS: ScreenRegistry = {
   chartd: { component: ChartDetailScreen, meta: chartDetailMeta },
   profile: { component: ProfileScreen, meta: profileMeta },
   rules: { component: RulesScreen, meta: rulesMeta },
+  reports: { component: ReportsScreen, meta: reportsMeta },
   c1: { component: PricingPerformanceScreen, meta: pricingPerformanceMeta },
   c2: { component: CompetitorIntelligenceScreen, meta: competitorIntelligenceMeta },
   c3: { component: ForecastAccuracyScreen, meta: forecastAccuracyMeta },

@@ -14,7 +14,7 @@ export const PERMISSIONS: readonly Permission[] = [
   { title: 'Recommendations', subtitle: 'Review, approve and reject', state: 'allowed' },
   { title: 'Dashboards', subtitle: 'Read-only across all five boards', state: 'allowed' },
   { title: 'Pricing rules', subtitle: 'Configure guardrails and floors', state: 'denied' },
-  { title: 'Reports', subtitle: 'Schedule and export', state: 'denied' },
+  { title: 'Reports', subtitle: 'Schedule and distribute', state: 'denied' },
   { title: 'Admin', subtitle: 'User and role management', state: 'denied' },
 ];
 

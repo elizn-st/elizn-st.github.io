@@ -41,6 +41,8 @@ export interface FieldReader {
   oneOfOrEmpty<T extends string>(field: string, allowed: readonly T[]): T | '';
   /** Required array of strings. */
   strings(field: string): readonly string[];
+  /** Optional array of strings; empty when the field is absent. */
+  optionalStrings(field: string): readonly string[];
   /** Required array of finite numbers. */
   numbers(field: string): readonly number[];
   /** Required array of objects, each mapped through a nested reader. */
@@ -139,6 +141,11 @@ export function readFields(path: string, data: DocumentData): FieldReader {
         }
         return item;
       });
+    },
+
+    optionalStrings(field) {
+      if (isMissing(data[field])) return [];
+      return reader.strings(field);
     },
 
     numbers(field) {

@@ -105,6 +105,41 @@ export const SEARCH_INDEX: readonly SearchGroup[] = [
         meta: 'Guardrails, floors and ceilings',
         route: 'rules',
       },
+      {
+        icon: 'file-text',
+        label: 'Browse the report catalogue',
+        meta: 'Schedules, formats and delivery',
+        route: 'reports',
+      },
+    ],
+  },
+  {
+    label: 'Reports',
+    entries: [
+      {
+        icon: 'file-text',
+        label: 'Weekly pricing cycle report',
+        meta: 'PDF · Mondays 08:00 GST',
+        route: 'reports',
+      },
+      {
+        icon: 'clock-counter-clockwise',
+        label: 'Decision audit extract',
+        meta: 'XLSX · Mondays 09:00 GST',
+        route: 'reports',
+      },
+      {
+        icon: 'shield-check',
+        label: 'Margin and guardrail compliance',
+        meta: 'PDF · 1st of month',
+        route: 'reports',
+      },
+      {
+        icon: 'gavel',
+        label: 'Regulatory filing pack',
+        meta: 'PDF · quarterly',
+        route: 'reports',
+      },
     ],
   },
   {
